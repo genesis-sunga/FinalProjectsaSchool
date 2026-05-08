@@ -15,6 +15,11 @@ const formatDate = (value) => {
     return date.toLocaleString();
 };
 
+const formatOrderNumber = (order) => {
+    const value = Number(order?.order_number || 0);
+    return value > 0 ? String(value).padStart(3, '0') : String(order?.order_id || '').padStart(3, '0');
+};
+
 const getStatusLabel = (status) => {
     const normalized = String(status || '').toLowerCase();
     if (normalized === 'pending') return 'Pending Store Payment';
@@ -198,7 +203,7 @@ const OrderHistory = () => {
                                         onClick={() => toggleOrder(order.order_id)}
                                     >
                                         <div className="summary-left">
-                                            <div className="order-id">Order #{order.order_id}</div>
+                                            <div className="order-id">Order #{formatOrderNumber(order)}</div>
                                             <div className="order-date">Placed: {formatDate(order.created_at)}</div>
                                         </div>
                                         <div className="summary-center">

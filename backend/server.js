@@ -59,7 +59,8 @@ function buildInvoicePdf(order, customer, items, invoiceNumber, filePath, meta =
         doc.moveDown(1.2);
 
         doc.fontSize(11).text(`Invoice Number: ${invoiceNumber}`);
-        doc.text(`Order ID: #${order.order_id}`);
+        doc.text(`Order Number: ${getOrderDisplayNumber(order)}`);
+        doc.text(`Internal Order ID: #${order.order_id}`);
         doc.text(`Customer: ${customer}`);
         doc.text(`Email: ${order.email || '-'}`);
         doc.text(`Contact Number: ${order.contact_number || meta.contactNumber || '-'}`);
@@ -155,6 +156,8 @@ db.connect(err => {
         "ALTER TABLE invoices ADD COLUMN IF NOT EXISTS issued_by_name VARCHAR(120) NULL AFTER issued_by_user_id",
         "ALTER TABLE orders ADD COLUMN IF NOT EXISTS paid_by_user_id INT NULL AFTER payment_method",
         "ALTER TABLE orders ADD COLUMN IF NOT EXISTS paid_by_name VARCHAR(120) NULL AFTER paid_by_user_id",
+        "ALTER TABLE orders ADD COLUMN IF NOT EXISTS order_number INT NULL AFTER order_id",
+        "ALTER TABLE orders ADD COLUMN IF NOT EXISTS order_date DATE NULL AFTER order_number",
         "ALTER TABLE user_accounts ADD COLUMN IF NOT EXISTS profile_image_url VARCHAR(500) NULL AFTER pwd_verified",
         "ALTER TABLE user_accounts ADD COLUMN IF NOT EXISTS id_front_image_url VARCHAR(500) NULL AFTER id_image_url",
         "ALTER TABLE user_accounts ADD COLUMN IF NOT EXISTS id_back_image_url VARCHAR(500) NULL AFTER id_front_image_url"
@@ -242,6 +245,49 @@ function getDateKey(date) {
     const m = String(date.getMonth() + 1).padStart(2, '0');
     const d = String(date.getDate()).padStart(2, '0');
     return `${y}-${m}-${d}`;
+}
+
+function formatOrderNumber(order) {
+    const value = Number(order?.order_number || 0);
+    return value > 0 ? String(value).padStart(3, '0') : String(order?.order_id || '').padStart(3, '0');
+}
+
+function getOrderDate(order) {
+    return order?.order_date || order?.created_at || new Date();
+}
+
+function getOrderDisplayNumber(order) {
+    return `#${formatOrderNumber(order)}`;
+}
+
+function buildInvoiceNumber(order) {
+    const dateKey = getDateKey(new Date(getOrderDate(order))).replace(/-/g, '');
+    return `INV-${dateKey}-${formatOrderNumber(order)}`;
+}
+
+function assignDailyOrderNumber(orderId, callback) {
+    db.query('SELECT order_id, order_number, created_at FROM orders WHERE order_id = ? LIMIT 1', [orderId], (findErr, rows) => {
+        if (findErr) return callback(findErr);
+        if (!rows || rows.length === 0) return callback(new Error('Order not found'));
+
+        const order = rows[0];
+        if (Number(order.order_number || 0) > 0) return callback(null, order.order_number);
+
+        db.query(
+            'SELECT COUNT(*) AS daily_count FROM orders WHERE DATE(created_at) = DATE(?) AND order_id <= ?',
+            [order.created_at, orderId],
+            (countErr, countRows) => {
+                if (countErr) return callback(countErr);
+
+                const nextOrderNumber = Number(countRows?.[0]?.daily_count || 1);
+                db.query(
+                    'UPDATE orders SET order_number = ?, order_date = DATE(created_at) WHERE order_id = ?',
+                    [nextOrderNumber, orderId],
+                    (updateErr) => callback(updateErr, nextOrderNumber)
+                );
+            }
+        );
+    });
 }
 
 function parseAdminEmailsFromEnv() {
@@ -982,7 +1028,7 @@ function dbQueryAsync(sql, params = []) {
 
 async function sendDiscontinuedProductInvoiceUpdateEmail(orderId, productName, actorUserId) {
     const orderRows = await dbQueryAsync(
-    `SELECT o.order_id, o.user_id, o.total_amount, o.created_at, o.status, o.shipping_address,
+    `SELECT o.order_id, o.order_number, o.order_date, o.user_id, o.total_amount, o.created_at, o.status, o.shipping_address,
                 u.email, u.first_name, u.last_name, u.contact_number,
                 i.invoice_id, i.invoice_number
          FROM orders o
@@ -1039,7 +1085,7 @@ async function sendDiscontinuedProductInvoiceUpdateEmail(orderId, productName, a
     let invoiceId = order.invoice_id;
     let invoiceNumber = order.invoice_number;
     if (!invoiceId) {
-        invoiceNumber = `INV-${Date.now()}-${orderId}`;
+        invoiceNumber = buildInvoiceNumber(order);
         const insertInvoiceResult = await dbQueryAsync(
             `INSERT INTO invoices (order_id, invoice_number, customer_name, email, contact_number, total_amount, payment_method, invoice_pdf_path)
              VALUES (?, ?, ?, ?, ?, ?, ?, NULL)`,
@@ -1077,7 +1123,7 @@ async function sendDiscontinuedProductInvoiceUpdateEmail(orderId, productName, a
             {
                 from: 'tongtongornamental@gmail.com',
                 to: order.email,
-                subject: `Order Updated - Item Discontinued (Order #${orderId})`,
+                subject: `Order Updated - Item Discontinued (Order ${getOrderDisplayNumber(order)})`,
                 html: `
                     <!DOCTYPE html>
                     <html>
@@ -1101,7 +1147,8 @@ async function sendDiscontinuedProductInvoiceUpdateEmail(orderId, productName, a
 
                         <div class="receipt">
                             <h3>Order Details</h3>
-                            <p><strong>Order ID:</strong> #${orderId}</p>
+                            <p><strong>Order Number:</strong> ${getOrderDisplayNumber(order)}</p>
+                            <p><strong>Internal Order ID:</strong> #${orderId}</p>
                             <p><strong>Customer:</strong> ${customerName}</p>
                             <p><strong>Order Date:</strong> ${new Date(order.created_at).toLocaleString()}</p>
                             <p><strong>Status:</strong> ${order.status}</p>
@@ -1515,6 +1562,8 @@ app.post('/api/orders', (req, res) => {
             if (err) return res.status(500).json({ message: "Database error" });
 
             const orderId = result.insertId;
+            assignDailyOrderNumber(orderId, (orderNumberErr, dailyOrderNumber) => {
+                if (orderNumberErr) return res.status(500).json({ message: "Order number error" });
 
             // Insert order items with discount
             let inserted = 0;
@@ -1539,7 +1588,7 @@ app.post('/api/orders', (req, res) => {
                         db.query("UPDATE orders SET total_amount = ? WHERE order_id = ?", [calculatedTotal, orderId]);
 
                         // Create invoice record
-                        const invoiceNumber = `INV-${orderId}-${Date.now()}`;
+                        const invoiceNumber = buildInvoiceNumber({ order_id: orderId, order_number: dailyOrderNumber, created_at: new Date() });
                         const invoicePdfPath = null;
                         db.query("INSERT INTO invoices (order_id, invoice_number, payment_method, invoice_pdf_path) VALUES (?, ?, ?, ?)",
                             [orderId, invoiceNumber, paymentMethod, invoicePdfPath], (invoiceErr, invoiceResult) => {
@@ -1561,6 +1610,7 @@ app.post('/api/orders', (req, res) => {
                         });
                     }
                 });
+            });
             });
         });
     });
@@ -1598,12 +1648,13 @@ function sendOrderReceipt(orderId, userId, invoiceId, res) {
                 
                 // Generate receipt HTML
                 const receiptHtml = generateReceiptHtml(order, itemsResult, userName);
+                const orderDisplayNumber = getOrderDisplayNumber(order);
                 
                 // Send email
                 const mailOptions = {
                     from: 'tongtongornamental@gmail.com',
                     to: userEmail,
-                    subject: `Order Receipt #${orderId} - TongTong Ornamental Fish Store`,
+                    subject: `Order Receipt ${orderDisplayNumber} - ${new Date(order.created_at).toLocaleDateString()} - TongTong Ornamental Fish Store`,
                     html: receiptHtml
                 };
                 
@@ -1625,7 +1676,7 @@ function sendOrderReceipt(orderId, userId, invoiceId, res) {
                     } else {
                         console.log("Receipt email sent:", info.response);
                     }
-                    res.json({ message: "Order created", orderId });
+                    res.json({ message: "Order created", orderId, orderNumber: formatOrderNumber(order) });
                 });
             });
         });
@@ -1636,6 +1687,7 @@ function sendOrderReceipt(orderId, userId, invoiceId, res) {
 app.get('/api/worker/orders', checkRole(['admin', 'worker']), (req, res) => {
     const sql = `
         SELECT o.order_id,
+               o.order_number,
                o.total_amount AS order_total,
                CASE WHEN LOWER(o.status) = 'processing' THEN 'pending' ELSE LOWER(o.status) END AS order_status,
                o.created_at AS order_date,
@@ -1695,6 +1747,7 @@ app.get('/api/worker/sales-history', checkRole(['admin', 'worker']), (req, res) 
 
     const sql = `
         SELECT o.order_id,
+               o.order_number,
                o.total_amount AS order_total,
                o.status AS order_status,
                o.updated_at AS order_date,
@@ -1725,7 +1778,7 @@ app.get('/api/worker/sales-history/:orderId/details', checkRole(['admin', 'worke
     const { orderId } = req.params;
 
     const orderSql = `
-        SELECT o.order_id, o.user_id, o.total_amount, o.status, o.payment_method,
+        SELECT o.order_id, o.order_number, o.order_date, o.user_id, o.total_amount, o.status, o.payment_method,
                o.created_at, o.updated_at, o.paid_by_name,
                u.first_name, u.last_name, u.email, u.contact_number,
                i.invoice_id, i.invoice_number, i.invoice_pdf_path, i.issued_by_name, i.created_at AS invoice_created_at
@@ -1794,6 +1847,8 @@ app.get('/api/worker/sales-history/:orderId/details', checkRole(['admin', 'worke
                 res.json({
                     order: {
                         order_id: order.order_id,
+                        order_number: order.order_number,
+                        order_date: order.order_date,
                         user_id: order.user_id,
                         customer_name: `${order.first_name || ''} ${order.last_name || ''}`.trim(),
                         email: order.email,
@@ -1835,6 +1890,8 @@ app.get('/api/worker/refunds', checkRole(['admin', 'worker']), (req, res) => {
     const sql = `
         SELECT cr.request_id,
                cr.order_id,
+               o.order_number,
+               o.order_date,
                cr.reason AS refund_reason,
                cr.status AS refund_status,
                cr.created_at AS request_date,
@@ -2008,7 +2065,7 @@ app.post('/api/worker/send-receipt-email', checkRole(['admin', 'worker']), (req,
             const mailOptions = {
                 from: 'tongtongornamental@gmail.com',
                 to: order.email,
-                subject: `Order Receipt #${order_id} - TongTong Ornamental Fish Store`,
+                subject: `Order Receipt ${getOrderDisplayNumber(order)} - ${new Date(order.created_at).toLocaleDateString()} - TongTong Ornamental Fish Store`,
                 html: receiptHtml
             };
 
@@ -2033,7 +2090,7 @@ app.post('/api/worker/send-receipt-email', checkRole(['admin', 'worker']), (req,
 
 // --- 27A. WORKER/ADMIN QUICK INVOICE DATA ---
 app.get('/api/worker/invoice-orders', checkRole(['admin', 'worker']), (req, res) => {
-    const sql = `SELECT o.order_id, o.user_id, o.total_amount, o.status, o.created_at AS order_date,
+    const sql = `SELECT o.order_id, o.order_number, o.user_id, o.total_amount, o.status, o.created_at AS order_date,
                         u.first_name, u.last_name, u.email,
                         i.invoice_id, i.invoice_number, i.invoice_pdf_path, i.issued_by_name,
                         o.paid_by_name
@@ -2047,6 +2104,7 @@ app.get('/api/worker/invoice-orders', checkRole(['admin', 'worker']), (req, res)
 
         const orders = results.map(row => ({
             order_id: row.order_id,
+            order_number: row.order_number,
             user_id: row.user_id,
             customer_name: `${row.first_name || ''} ${row.last_name || ''}`.trim(),
             email: row.email,
@@ -2106,7 +2164,7 @@ app.post('/api/worker/generate-invoice', checkRole(['admin', 'worker']), (req, r
                                 async (itemsErr, itemRows) => {
                                     if (itemsErr) return res.status(500).json({ message: 'Database error' });
 
-                                    const safeInvoiceNumber = (invoiceRecord.invoice_number || `INV-${Date.now()}-${order_id}`).replace(/[^A-Za-z0-9-_]/g, '_');
+                                    const safeInvoiceNumber = (invoiceRecord.invoice_number || buildInvoiceNumber(order)).replace(/[^A-Za-z0-9-_]/g, '_');
                                     const fileName = `${safeInvoiceNumber}.pdf`;
                                     const absPath = path.join(invoiceUploadDir, fileName);
                                     const publicPath = `/uploads/invoices/${fileName}`;
@@ -2152,7 +2210,7 @@ app.post('/api/worker/generate-invoice', checkRole(['admin', 'worker']), (req, r
                             return generatePdfAndRespond({ ...invoiceResults[0], issued_by_name: issuedByName });
                         }
 
-                        const invoiceNumber = `INV-${Date.now()}-${order_id}`;
+                        const invoiceNumber = buildInvoiceNumber(order);
                         db.query(
                             'INSERT INTO invoices (order_id, invoice_number, payment_method, invoice_pdf_path, issued_by_user_id, issued_by_name) VALUES (?, ?, ?, ?, ?, ?)',
                             [order_id, invoiceNumber, order.payment_method || 'cash_on_store', null, userId || null, issuedByName],
@@ -2180,7 +2238,7 @@ app.post('/api/worker/generate-invoice', checkRole(['admin', 'worker']), (req, r
 // --- 27BA. WORKER/ADMIN MANUAL INVOICE STATUS UPDATE (PAID OR CANCELLED) ---
 function sendPaymentConfirmationInvoiceEmail(orderId, requestedByUserId, callback) {
     const sql = `
-        SELECT o.order_id, o.total_amount, o.created_at, o.status, o.payment_method,
+        SELECT o.order_id, o.order_number, o.order_date, o.total_amount, o.created_at, o.status, o.payment_method,
                o.paid_by_name, o.paid_by_user_id,
                u.user_id, u.email, u.first_name, u.last_name,
                i.invoice_id, i.invoice_number, i.invoice_pdf_path, i.issued_by_name
@@ -2212,13 +2270,16 @@ function sendPaymentConfirmationInvoiceEmail(orderId, requestedByUserId, callbac
             const mailOptions = {
                 from: 'tongtongornamental@gmail.com',
                 to: payload.email,
-                subject: `Payment Confirmed - Order #${payload.order_id} (Invoice ${payload.invoice_number})`,
+                subject: `Payment Confirmed - Order ${getOrderDisplayNumber(payload)} - ${new Date(payload.created_at).toLocaleDateString()} (Invoice ${payload.invoice_number})`,
                 html: `
                     <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
                         <h2>TongTong Ornamental Fish Store</h2>
                         <p>Hello ${payload.first_name || ''} ${payload.last_name || ''},</p>
-                        <p>Your in-store payment for <strong>Order #${payload.order_id}</strong> has been confirmed.</p>
+                        <p>Your in-store payment for <strong>Order ${getOrderDisplayNumber(payload)}</strong> has been confirmed.</p>
+                        <p><strong>Internal Order ID:</strong> #${payload.order_id}</p>
                         <p><strong>Invoice Number:</strong> ${payload.invoice_number}</p>
+                        <p><strong>Order Date:</strong> ${new Date(payload.created_at).toLocaleString()}</p>
+                        <p><strong>Payment Confirmation Date:</strong> ${new Date().toLocaleString()}</p>
                         <p><strong>Total Amount:</strong> PHP ${Number(payload.total_amount || 0).toFixed(2)}</p>
                         <p><strong>Prepared By:</strong> ${payload.issued_by_name || 'Store Staff'}</p>
                         <p><strong>Payment Confirmed By:</strong> ${payload.paid_by_name || 'Store Staff'}</p>
@@ -2243,7 +2304,7 @@ function sendPaymentConfirmationInvoiceEmail(orderId, requestedByUserId, callbac
             return sendEmail(row);
         }
 
-        const generatedInvoiceNumber = `INV-${Date.now()}-${orderId}`;
+        const generatedInvoiceNumber = buildInvoiceNumber(row);
         db.query(
             'INSERT INTO invoices (order_id, invoice_number, payment_method, invoice_pdf_path, issued_by_user_id, issued_by_name) VALUES (?, ?, ?, ?, ?, ?)',
             [
@@ -2356,7 +2417,7 @@ app.get('/api/orders/:orderId/invoice-pdf', (req, res) => {
     }
 
     const accessSql = `
-        SELECT o.order_id, o.user_id, o.total_amount, o.created_at, o.status,
+        SELECT o.order_id, o.order_number, o.order_date, o.user_id, o.total_amount, o.created_at, o.status,
              o.paid_by_name,
                u.email, u.first_name, u.last_name,
                r.role_name,
@@ -2405,7 +2466,7 @@ app.get('/api/orders/:orderId/invoice-pdf', (req, res) => {
             async (itemsErr, itemRows) => {
                 if (itemsErr) return res.status(500).json({ message: 'Database error' });
 
-                const safeInvoiceNumber = (row.invoice_number || `INV-${Date.now()}-${orderId}`).replace(/[^A-Za-z0-9-_]/g, '_');
+                const safeInvoiceNumber = (row.invoice_number || buildInvoiceNumber(row)).replace(/[^A-Za-z0-9-_]/g, '_');
                 const fileName = `${safeInvoiceNumber}.pdf`;
                 const absPath = path.join(invoiceUploadDir, fileName);
                 const publicPath = `/uploads/invoices/${fileName}`;
@@ -2538,6 +2599,7 @@ app.get('/api/worker/cash-register', checkRole(['admin', 'worker']), (req, res) 
     const pendingInvoicesSql = `
         SELECT
             o.order_id,
+            o.order_number,
             o.total_amount,
             o.status,
             o.created_at,
@@ -2899,6 +2961,8 @@ app.post('/api/worker/cash-register/manual-order', checkRole(['admin', 'worker']
                 if (orderErr) return res.status(500).json({ message: 'Failed to create manual order' });
 
                 const orderId = orderResult.insertId;
+                assignDailyOrderNumber(orderId, (orderNumberErr, dailyOrderNumber) => {
+                    if (orderNumberErr) return res.status(500).json({ message: 'Order created but failed to assign daily order number' });
                 const unitDiscount = discountRate;
 
                 let processedItems = 0;
@@ -2923,7 +2987,7 @@ app.post('/api/worker/cash-register/manual-order', checkRole(['admin', 'worker']
                                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'issued', NOW())
                                 `;
 
-                                const invoiceNumber = `INV-${Date.now()}`;
+                                const invoiceNumber = buildInvoiceNumber({ order_id: orderId, order_number: dailyOrderNumber, created_at: new Date() });
                                 db.query(invoiceSql, [orderId, invoiceNumber, normalizedCustomer, email || null, contact_number || null, computedTotal, userId, workerName], (invoiceErr) => {
                                     if (invoiceErr) return res.status(500).json({ message: 'Order created but failed to generate invoice' });
 
@@ -2955,6 +3019,7 @@ app.post('/api/worker/cash-register/manual-order', checkRole(['admin', 'worker']
                                             res.json({
                                                 message: 'Walk-in order created and marked as paid successfully',
                                                 orderId,
+                                                orderNumber: String(dailyOrderNumber).padStart(3, '0'),
                                                 invoiceNumber,
                                                 totals: {
                                                     subtotal: Number(subtotal || computedSubtotal),
@@ -2969,6 +3034,7 @@ app.post('/api/worker/cash-register/manual-order', checkRole(['admin', 'worker']
                         }
                     );
                 }
+                });
             });
         });
     });
@@ -2978,7 +3044,7 @@ app.get('/api/worker/cash-register/order/:orderId/details', checkRole(['admin', 
     const { orderId } = req.params;
 
     const orderSql = `
-        SELECT o.order_id, o.user_id, o.status, o.created_at, o.payment_method, o.total_amount,
+        SELECT o.order_id, o.order_number, o.order_date, o.user_id, o.status, o.created_at, o.payment_method, o.total_amount,
                u.first_name, u.last_name, u.email, u.contact_number,
                u.is_senior, u.is_pwd, u.senior_verified, u.pwd_verified,
                          i.invoice_id, i.invoice_number, i.issued_by_name, i.created_at AS invoice_created_at
@@ -3263,7 +3329,8 @@ function generateReceiptHtml(order, items, userName) {
             
             <div class="receipt">
                 <h3>Order Details</h3>
-                <p><strong>Order ID:</strong> #${order.order_id}</p>
+                <p><strong>Order Number:</strong> ${getOrderDisplayNumber(order)}</p>
+                <p><strong>Internal Order ID:</strong> #${order.order_id}</p>
                 <p><strong>Customer:</strong> ${userName}</p>
                 <p><strong>Order Date:</strong> ${new Date(order.created_at).toLocaleString()}</p>
                 <p><strong>Status:</strong> ${order.status}</p>
@@ -3347,7 +3414,8 @@ function generateCancellationInvoice(userData, orderItems, cancellationRequest, 
                     
                     <div class="status-box approved">
                         <h3 style="margin-top: 0; color: #28a745;">✓ Cancellation Status: APPROVED</h3>
-                        <p><strong>Order ID:</strong> #${userData.order_id}</p>
+                        <p><strong>Order Number:</strong> ${getOrderDisplayNumber(userData)}</p>
+                        <p><strong>Internal Order ID:</strong> #${userData.order_id}</p>
                         <p><strong>Original Order Date:</strong> ${formattedDate}</p>
                         <p><strong>Cancellation Approved Date:</strong> ${approvalDate}</p>
                         <p><strong>Approved By:</strong> ${approvalName || 'Store Staff'}</p>
@@ -3673,7 +3741,7 @@ app.post('/api/orders/:orderId/cancel', (req, res) => {
 // --- 33. GET CANCELLATION REQUESTS (Admin/Worker) ---
 app.get('/api/admin/cancellation-requests', checkRole(['admin', 'worker']), (req, res) => {
     const sql = `
-        SELECT cr.*, o.total_amount, o.status as order_status, 
+        SELECT cr.*, o.order_number, o.order_date, o.total_amount, o.status as order_status, 
                u.first_name, u.last_name, u.email,
                reviewer.first_name AS reviewed_by_first_name,
                reviewer.last_name AS reviewed_by_last_name
@@ -3746,7 +3814,7 @@ app.put('/api/admin/cancellation-requests/:requestId', checkRole(['admin', 'work
                                     
                                     // Get user email and order details for email
                                     db.query(
-                                        "SELECT u.email, u.first_name, u.last_name, o.order_id, o.total_amount, o.created_at FROM user_accounts u JOIN orders o ON u.user_id = o.user_id WHERE o.order_id = ?",
+                                        "SELECT u.email, u.first_name, u.last_name, o.order_id, o.order_number, o.order_date, o.total_amount, o.created_at FROM user_accounts u JOIN orders o ON u.user_id = o.user_id WHERE o.order_id = ?",
                                         [request.order_id],
                                         (err, userOrderData) => {
                                             if (err) {
@@ -3766,7 +3834,7 @@ app.put('/api/admin/cancellation-requests/:requestId', checkRole(['admin', 'work
                                                             const mailOptions = {
                                                                 from: 'tongtongornamental@gmail.com',
                                                                 to: userData.email,
-                                                                subject: `Order Cancellation Confirmed - Order #${request.order_id}`,
+                                                                subject: `Order Cancellation Confirmed - Order ${getOrderDisplayNumber(userData)} - ${new Date(userData.created_at).toLocaleDateString()}`,
                                                                 html: cancellationHtml
                                                             };
                                                             

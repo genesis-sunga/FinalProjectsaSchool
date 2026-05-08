@@ -5,6 +5,11 @@ import Swal from 'sweetalert2';
 import { Trash2, Plus, Minus, ShoppingCart, Package, ArrowLeft } from 'lucide-react';
 import './Cart.css';
 
+const formatOrderNumber = (order) => {
+    const value = Number(order?.order_number || 0);
+    return value > 0 ? String(value).padStart(3, '0') : String(order?.order_id || '').padStart(3, '0');
+};
+
 const Cart = () => {
     const [cartItems, setCartItems] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -380,7 +385,7 @@ const Cart = () => {
                                 <div key={order.order_id} className="previous-order-card">
                                     <div className="previous-order-card-top">
                                         <div>
-                                            <strong>Order #{order.order_id}</strong>
+                                            <strong>Order #{formatOrderNumber(order)}</strong>
                                             <span>{new Date(order.created_at).toLocaleDateString()}</span>
                                         </div>
                                     </div>

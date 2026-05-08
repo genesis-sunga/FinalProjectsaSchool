@@ -99,9 +99,10 @@ const Checkout = () => {
             });
 
             if (response.data.orderId) {
+                const placedOrderNumber = response.data.orderNumber || String(response.data.orderId).padStart(3, '0');
                 Swal.fire({
                     title: 'Order Successful!',
-                    text: `Order #${response.data.orderId} has been placed. Please proceed to the store to pay and claim your products.`,
+                    text: `Order #${placedOrderNumber} has been placed. Please proceed to the store to pay and claim your products.`,
                     icon: 'success',
                     confirmButtonColor: '#2563eb'
                 }).then(() => {

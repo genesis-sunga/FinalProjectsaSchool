@@ -576,16 +576,36 @@ const ProductCatalog = () => {
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                         />
-                        <button
-                            type="button"
-                            className={`speech-button ${isListening ? 'listening' : ''}`}
-                            onClick={handleSpeechToggle}
-                            title={speechSupported ? (isListening ? 'Stop voice input' : 'Start voice input') : 'Speech not supported'}
-                            aria-label={isListening ? 'Stop voice input' : 'Start voice input'}
-                            disabled={!speechSupported}
-                        >
-                            {isListening ? <MicOff size={18} /> : <Mic size={18} />}
-                        </button>
+                        <div className="speech-control">
+                            {isListening && (
+                                <div className="voice-listening-popover" role="status" aria-live="polite">
+                                    <div className="voice-listening-toolbar">
+                                        <button
+                                            type="button"
+                                            className="voice-listening-close"
+                                            onClick={handleSpeechToggle}
+                                            aria-label="Stop voice search"
+                                            title="Stop voice search"
+                                        >
+                                            <X size={14} />
+                                        </button>
+                                        <Mic size={18} />
+                                        <span className="voice-listening-focus" aria-hidden="true" />
+                                    </div>
+                                    <div className="voice-listening-label">Tell me what you're looking for.</div>
+                                </div>
+                            )}
+                            <button
+                                type="button"
+                                className={`speech-button ${isListening ? 'listening' : ''}`}
+                                onClick={handleSpeechToggle}
+                                title={speechSupported ? (isListening ? 'Stop voice input' : 'Start voice input') : 'Speech not supported'}
+                                aria-label={isListening ? 'Stop voice input' : 'Start voice input'}
+                                disabled={!speechSupported}
+                            >
+                                {isListening ? <MicOff size={18} /> : <Mic size={18} />}
+                            </button>
+                        </div>
                     </div>
                 </div>
                 <div className="filter-group select-filter">

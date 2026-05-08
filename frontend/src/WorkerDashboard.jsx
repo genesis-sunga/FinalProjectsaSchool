@@ -35,6 +35,13 @@ const formatTransactionDateHeading = (dateKey) => {
     });
 };
 
+const formatOrderNumber = (order) => {
+    const value = Number(order?.order_number || 0);
+    return value > 0 ? String(value).padStart(3, '0') : String(order?.order_id || '').padStart(3, '0');
+};
+
+const getOrderLabel = (order) => `Order #${formatOrderNumber(order)}`;
+
 const WorkerDashboard = () => {
     const navigate = useNavigate();
     const getInitialTab = () => {
@@ -163,6 +170,7 @@ const WorkerDashboard = () => {
         return {
             ...order,
             order_id: order?.order_id ?? order?.id,
+            order_number: order?.order_number ?? order?.daily_order_number ?? null,
             order_status: normalizedStatus === 'processing' ? 'pending' : normalizedStatus,
             order_total: Number(order?.order_total ?? order?.total_amount ?? 0),
             order_date: order?.order_date || order?.created_at || order?.updated_at || null,
@@ -506,7 +514,7 @@ const WorkerDashboard = () => {
             <div style="font-family: monospace; padding: 20px; max-width: 400px;">
                 <h2 style="text-align: center;">RECEIPT</h2>
                 <hr />
-                <p><strong>Order #:</strong> ${receipt.order_id}</p>
+                <p><strong>Order #:</strong> ${formatOrderNumber(receipt)}</p>
                 <p><strong>Date:</strong> ${new Date(receipt.order_date).toLocaleDateString()}</p>
                 <p><strong>Customer:</strong> ${receipt.customer_name}</p>
                 <p><strong>Processed By:</strong> ${workerName}</p>
@@ -604,7 +612,7 @@ const WorkerDashboard = () => {
 
     const handleConfirmCashierPayment = async (order) => {
         const { value: formValues } = await Swal.fire({
-            title: `Mark Paid: Order #${order.order_id}`,
+            title: `Mark Paid: ${getOrderLabel(order)}`,
             html: `
                 <label style="display:block; text-align:left; margin-bottom:6px;">Payment Method</label>
                 <select id="swal-payment-method" class="swal2-input" style="margin:0 0 10px 0;">
@@ -653,7 +661,7 @@ const WorkerDashboard = () => {
 
     const handleMarkCashierOrderCancelled = async (order) => {
         const result = await Swal.fire({
-            title: `Cancel Order #${order.order_id}?`,
+            title: `Cancel ${getOrderLabel(order)}?`,
             text: 'This will remove it from pending cashier queue.',
             icon: 'warning',
             showCancelButton: true,
@@ -1417,7 +1425,7 @@ const WorkerDashboard = () => {
                                         <tbody>
                                             {pendingCancellationRequests.map((request) => (
                                                 <tr key={request.request_id}>
-                                                    <td>#{request.order_id}</td>
+                                                    <td>#{formatOrderNumber(request)}</td>
                                                     <td>{request.first_name} {request.last_name}</td>
                                                     <td>{request.reason || 'No reason provided'}</td>
                                                     <td>{new Date(request.created_at).toLocaleDateString()}</td>
@@ -1482,7 +1490,7 @@ const WorkerDashboard = () => {
                                 ).map((order) => (
                                     <div key={order.order_id} className="worker-order-item" onClick={() => {setSelectedOrder(order); setShowOrderModal(true);}}>
                                         <div className="worker-order-card-header">
-                                            <span className="worker-order-id">Order #{order.order_id}</span>
+                                            <span className="worker-order-id">{getOrderLabel(order)}</span>
                                             <div className="worker-order-header-status-group">
                                                 {pendingCancellationByOrderId[order.order_id] && (
                                                     <span className="worker-order-cancel-request-badge">Cancellation pending</span>
@@ -1562,7 +1570,7 @@ const WorkerDashboard = () => {
                                                 <div className="sales-history-main">
                                                     <div className="sales-history-top">
                                                         <div>
-                                                            <div className="sales-history-order">Order #{sale.order_id}</div>
+                                                            <div className="sales-history-order">{getOrderLabel(sale)}</div>
                                                             <div className="sales-history-customer">{sale.customer_name}</div>
                                                         </div>
                                                         <span className={`order-status ${sale.order_status}`}>{sale.order_status}</span>
@@ -1678,7 +1686,7 @@ const WorkerDashboard = () => {
                                                     <table className="sales-table">
                                                         <thead>
                                                             <tr>
-                                                                <th>Order ID</th>
+                                                                <th>Order Number</th>
                                                                 <th>Customer Name</th>
                                                                 <th>Email</th>
                                                                 <th>Contact Number</th>
@@ -1694,7 +1702,7 @@ const WorkerDashboard = () => {
                                                                     className="cashier-order-row"
                                                                     onClick={() => handleCashierRowClick(order)}
                                                                 >
-                                                                    <td>#{order.order_id}</td>
+                                                                    <td>#{formatOrderNumber(order)}</td>
                                                                     <td>{order.customer_name}</td>
                                                                     <td>{order.email || '-'}</td>
                                                                     <td>{order.contact_number || '-'}</td>
@@ -1799,7 +1807,7 @@ const WorkerDashboard = () => {
                                             </div>
                                             <p className="log-description">{tx.description}</p>
                                             <div className="log-details">
-                                                <span>Order: #{tx.order_id}</span>
+                                                <span>Order: #{formatOrderNumber(tx)}</span>
                                                 <span>Amount: ₱{parseFloat(tx.amount).toFixed(2)}</span>
                                             </div>
                                             <div className="transaction-click-hint">
@@ -1861,7 +1869,7 @@ const WorkerDashboard = () => {
                 <div className="modal-overlay" onClick={() => setShowOrderModal(false)}>
                     <div className="modal-content" onClick={(e) => e.stopPropagation()}>
                         <h3>Process Order</h3>
-                        <p className="product-name">Order #{selectedOrder.order_id}</p>
+                        <p className="product-name">{getOrderLabel(selectedOrder)}</p>
 
                         <div className="order-modal-details">
                             <p><strong>Customer:</strong> {selectedOrder.customer_name}</p>
@@ -1919,7 +1927,8 @@ const WorkerDashboard = () => {
                         <h3>Order Details</h3>
 
                         <div className="order-modal-details">
-                            <p><strong>Order ID:</strong> #{selectedCashierOrderDetails.order?.order_id}</p>
+                            <p><strong>Order Number:</strong> #{formatOrderNumber(selectedCashierOrderDetails.order)}</p>
+                            <p><strong>Internal Order ID:</strong> #{selectedCashierOrderDetails.order?.order_id}</p>
                             <p><strong>Customer:</strong> {selectedCashierOrderDetails.order?.customer_name}</p>
                             <p><strong>Email:</strong> {selectedCashierOrderDetails.order?.email || '-'}</p>
                             <p><strong>Contact Number:</strong> {selectedCashierOrderDetails.order?.contact_number || '-'}</p>
@@ -2308,7 +2317,11 @@ const WorkerDashboard = () => {
 
                         <div className="sales-detail-grid">
                             <div className="detail-group">
-                                <span className="detail-label">Order ID</span>
+                                <span className="detail-label">Order Number</span>
+                                <span className="detail-value">#{formatOrderNumber(selectedSalesOrderDetails.order)}</span>
+                            </div>
+                            <div className="detail-row">
+                                <span className="detail-label">Internal Order ID</span>
                                 <span className="detail-value">#{selectedSalesOrderDetails.order?.order_id}</span>
                             </div>
                             <div className="detail-group">
