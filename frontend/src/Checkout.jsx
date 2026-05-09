@@ -9,7 +9,12 @@ const Checkout = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const { cartItems, subtotal, discountedSubtotal, discountAmount, discountRate, tax, total } = location.state || {};
-    const [backgroundImageUrl, setBackgroundImageUrl] = useState('/isda_bg.png');
+    const [clientTheme, setClientTheme] = useState({
+        pageBg: '#e9f7f6',
+        cardBg: '#ffffff',
+        panelBg: '#f8fcfc',
+        softBg: '#dff4f2'
+    });
     
     const user = JSON.parse(localStorage.getItem('user'));
     const [formData, setFormData] = useState({
@@ -23,19 +28,21 @@ const Checkout = () => {
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
-        const fetchBackground = async () => {
+        const fetchClientTheme = async () => {
             try {
                 const res = await axios.get('http://localhost:5000/api/background-settings');
-                const setting = Array.isArray(res.data)
-                    ? res.data.find((item) => item.setting_name === 'client_background')
-                    : null;
-                setBackgroundImageUrl(setting?.setting_value || '/isda_bg.png');
-            } catch {
-                setBackgroundImageUrl('/isda_bg.png');
-            }
+                const settings = Array.isArray(res.data) ? res.data : [];
+                const getSetting = (name, fallback) => settings.find((item) => item.setting_name === name)?.setting_value || fallback;
+                setClientTheme({
+                    pageBg: getSetting('client_theme_page_bg', '#e9f7f6'),
+                    cardBg: getSetting('client_theme_card_bg', '#ffffff'),
+                    panelBg: getSetting('client_theme_panel_bg', '#f8fcfc'),
+                    softBg: getSetting('client_theme_soft_bg', '#dff4f2')
+                });
+            } catch {}
         };
 
-        fetchBackground();
+        fetchClientTheme();
     }, []);
 
     if (!cartItems || cartItems.length === 0) {
@@ -124,7 +131,12 @@ const Checkout = () => {
     return (
         <div
             className="checkout-container"
-            style={{ backgroundImage: `linear-gradient(rgba(11, 31, 42, 0.32), rgba(11, 31, 42, 0.32)), url('${backgroundImageUrl}')` }}
+            style={{
+                '--client-page-bg': clientTheme.pageBg,
+                '--client-card-bg': clientTheme.cardBg,
+                '--client-panel-bg': clientTheme.panelBg,
+                '--client-soft-bg': clientTheme.softBg
+            }}
         >
             <div className="checkout-header glass-panel">
                 <div className="checkout-header-left">
@@ -132,9 +144,9 @@ const Checkout = () => {
                         className="back-button"
                         onClick={() => navigate('/cart')}
                         type="button"
+                        title="Back to Cart"
                     >
                         <ArrowLeft size={20} />
-                        Back to Cart
                     </button>
                 </div>
 
