@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import Swal from 'sweetalert2';
-import { User, ShoppingCart, Package, Settings, LogOut, Eye, EyeOff, X, Mic, MicOff } from 'lucide-react';
+import { ShoppingCart, Package, LogOut, Eye, EyeOff, X, Mic, MicOff, Search, Menu } from 'lucide-react';
 import './ProductCatalog.css';
 
 const ALLOWED_SUFFIXES = ['', 'Jr.', 'Sr.', 'II', 'III', 'IV', 'V'];
@@ -19,17 +19,26 @@ const ProductCatalog = () => {
     const [sortOrder, setSortOrder] = useState('ASC');
     const [loading, setLoading] = useState(true);
     const [speechSupported, setSpeechSupported] = useState(false);
-    const [isListening, setIsListening] = useState(false);
+    const [, setIsListening] = useState(false);
+    const [voiceSearchActive, setVoiceSearchActive] = useState(false);
+    const [voicePrompt, setVoicePrompt] = useState('Speak now...');
+    const searchInputRef = useRef(null);
     const recognitionRef = useRef(null);
+    const voiceSearchActiveRef = useRef(false);
+    const heardVoiceRef = useRef(false);
+    const speechRetryTimeoutRef = useRef(null);
+    const accountSidebarCloseTimerRef = useRef(null);
 
     const [showProfileModal, setShowProfileModal] = useState(false);
+    const [isAccountSidebarClosing, setIsAccountSidebarClosing] = useState(false);
+    const [accountSettingsSection, setAccountSettingsSection] = useState('profilePicture');
     const [profileLoading, setProfileLoading] = useState(false);
     const [passwordLoading, setPasswordLoading] = useState(false);
     const [showOldPassword, setShowOldPassword] = useState(false);
     const [showNewPassword, setShowNewPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [passwordRequirements, setPasswordRequirements] = useState({ length: false, upper: false, lower: false, number: false, symbol: false });
-    const [passwordStrength, setPasswordStrength] = useState({ label: '', color: '', score: 0 });
+    const [, setPasswordStrength] = useState({ label: '', color: '', score: 0 });
     const [discountRequestType, setDiscountRequestType] = useState('none');
     const [discountIdFrontFile, setDiscountIdFrontFile] = useState(null);
     const [discountIdBackFile, setDiscountIdBackFile] = useState(null);
@@ -79,6 +88,56 @@ const ProductCatalog = () => {
         .replace(/[.,!?;:。]+$/g, '')
         .trim();
 
+    const clearSpeechRetryTimeout = () => {
+        if (speechRetryTimeoutRef.current) {
+            clearTimeout(speechRetryTimeoutRef.current);
+            speechRetryTimeoutRef.current = null;
+        }
+    };
+
+    const startSpeechRecognition = () => {
+        if (!recognitionRef.current) return;
+
+        try {
+            recognitionRef.current.start();
+        } catch (err) {
+            if (err?.name !== 'InvalidStateError') {
+                console.error(err);
+                setIsListening(false);
+                setVoiceSearchActive(false);
+                voiceSearchActiveRef.current = false;
+            }
+        }
+    };
+
+    const stopSpeechRecognitionLoop = () => {
+        clearSpeechRetryTimeout();
+        voiceSearchActiveRef.current = false;
+        setVoiceSearchActive(false);
+        setVoicePrompt('Speak now...');
+
+        try {
+            recognitionRef.current?.stop();
+        } catch {
+            // Some browsers throw when stop is called after recognition already ended.
+        }
+    };
+
+    const retrySpeechRecognition = (message = "Can't hear that, can you please try again?") => {
+        if (!voiceSearchActiveRef.current) return;
+
+        clearSpeechRetryTimeout();
+        heardVoiceRef.current = false;
+        setVoicePrompt(message);
+        setIsListening(false);
+
+        speechRetryTimeoutRef.current = setTimeout(() => {
+            if (!voiceSearchActiveRef.current) return;
+            setVoicePrompt('Speak now...');
+            startSpeechRecognition();
+        }, 3000);
+    };
+
     useEffect(() => {
         const fetchClientTheme = async () => {
             try {
@@ -91,7 +150,9 @@ const ProductCatalog = () => {
                     panelBg: getSetting('client_theme_panel_bg', '#f8fcfc'),
                     softBg: getSetting('client_theme_soft_bg', '#dff4f2')
                 });
-            } catch {}
+            } catch {
+                // Keep the default client theme if custom settings are unavailable.
+            }
         };
 
         fetchClientTheme();
@@ -104,7 +165,9 @@ const ProductCatalog = () => {
                 sessionLogId: localStorage.getItem('sessionLogId'),
                 sessionToken: localStorage.getItem('sessionToken')
             });
-        } catch {}
+        } catch {
+            // Logout should still clear local session state if the server call fails.
+        }
         localStorage.removeItem('user');
         localStorage.removeItem('sessionLogId');
         localStorage.removeItem('sessionToken');
@@ -138,24 +201,51 @@ const ProductCatalog = () => {
         recognition.interimResults = true;
 
         recognition.onstart = () => setIsListening(true);
-        recognition.onend = () => setIsListening(false);
-        recognition.onerror = () => setIsListening(false);
+        recognition.onend = () => {
+            setIsListening(false);
+            if (voiceSearchActiveRef.current && !heardVoiceRef.current) {
+                retrySpeechRecognition();
+            }
+        };
+        recognition.onerror = (event) => {
+            setIsListening(false);
+            if (voiceSearchActiveRef.current && (event.error === 'no-speech' || event.error === 'audio-capture')) {
+                retrySpeechRecognition();
+                return;
+            }
+            stopSpeechRecognitionLoop();
+        };
         recognition.onresult = (event) => {
             let transcript = '';
             for (let i = event.resultIndex; i < event.results.length; i += 1) {
                 transcript += event.results[i][0].transcript;
             }
-            setSearch(normalizeSearchInput(transcript));
+            const normalizedTranscript = normalizeSearchInput(transcript);
+            if (!normalizedTranscript) return;
+
+            heardVoiceRef.current = true;
+            setSearch(normalizedTranscript);
+            stopSpeechRecognitionLoop();
         };
 
         recognitionRef.current = recognition;
         setSpeechSupported(true);
 
         return () => {
+            clearSpeechRetryTimeout();
+            voiceSearchActiveRef.current = false;
             try {
                 recognition.stop();
-            } catch {}
+            } catch {
+                // Recognition may already be stopped during component cleanup.
+            }
         };
+    }, []);
+
+    useEffect(() => () => {
+        if (accountSidebarCloseTimerRef.current) {
+            clearTimeout(accountSidebarCloseTimerRef.current);
+        }
     }, []);
 
     const fetchProducts = async () => {
@@ -209,6 +299,8 @@ const ProductCatalog = () => {
             return sortOrder === 'DESC' ? b.localeCompare(a) : a.localeCompare(b);
         });
     }, [products, search, sortOrder]);
+
+    const hasSearchTerm = normalizeSearchInput(search).length > 0;
 
     const handleAddToCart = async (product) => {
         if (!userId) {
@@ -270,7 +362,14 @@ const ProductCatalog = () => {
     const openProfileModal = async () => {
         if (!userId) return;
 
+        if (accountSidebarCloseTimerRef.current) {
+            clearTimeout(accountSidebarCloseTimerRef.current);
+            accountSidebarCloseTimerRef.current = null;
+        }
+
         setShowProfileModal(true);
+        setIsAccountSidebarClosing(false);
+        setAccountSettingsSection('profilePicture');
         setProfileLoading(true);
 
         try {
@@ -343,6 +442,8 @@ const ProductCatalog = () => {
                 last_name: profileEdit.last_name,
                 suffix: profileEdit.suffix,
                 email: profileEdit.email,
+                contact_number: profileEdit.contact_number,
+                address: profileEdit.address,
                 id_image_url: uploadedImageUrl
             });
 
@@ -372,6 +473,8 @@ const ProductCatalog = () => {
                 last_name: profileEdit.last_name,
                 suffix: profileEdit.suffix,
                 email: profileEdit.email,
+                contact_number: profileEdit.contact_number,
+                address: profileEdit.address,
                 id_image_url: uploadedImageUrl
             };
 
@@ -409,31 +512,6 @@ const ProductCatalog = () => {
             else if (score <= 1) setPasswordStrength({ label: 'Weak', color: '#ff4d4d', score: 1 });
             else if (score <= 4) setPasswordStrength({ label: 'Medium', color: '#ffa500', score: 2 });
             else setPasswordStrength({ label: 'Strong', color: '#22c55e', score: 5 });
-        }
-    };
-
-    const handlePasswordSave = async (e) => {
-        e.preventDefault();
-
-        if (passwordEdit.newPassword !== passwordEdit.confirmPassword) {
-            Swal.fire('Error', 'Passwords do not match', 'error');
-            return;
-        }
-
-        setPasswordLoading(true);
-
-        try {
-            await axios.put(`http://localhost:5000/api/account/${userId}/password`, {
-                oldPassword: passwordEdit.oldPassword,
-                newPassword: passwordEdit.newPassword
-            });
-
-            Swal.fire('Success', 'Password changed', 'success');
-            setShowProfileModal(false);
-        } catch (err) {
-            Swal.fire('Error', err.response?.data?.message || 'Failed', 'error');
-        } finally {
-            setPasswordLoading(false);
         }
     };
 
@@ -498,15 +576,32 @@ const ProductCatalog = () => {
         }
 
         try {
-            if (isListening) {
-                recognitionRef.current.stop();
+            if (voiceSearchActiveRef.current) {
+                stopSpeechRecognitionLoop();
             } else {
-                recognitionRef.current.start();
+                heardVoiceRef.current = false;
+                voiceSearchActiveRef.current = true;
+                setVoiceSearchActive(true);
+                setVoicePrompt('Speak now...');
+                startSpeechRecognition();
             }
         } catch (err) {
             console.error(err);
             setIsListening(false);
+            setVoiceSearchActive(false);
+            voiceSearchActiveRef.current = false;
         }
+    };
+
+    const closeAccountSidebar = () => {
+        if (!showProfileModal || isAccountSidebarClosing) return;
+
+        setIsAccountSidebarClosing(true);
+        accountSidebarCloseTimerRef.current = setTimeout(() => {
+            setShowProfileModal(false);
+            setIsAccountSidebarClosing(false);
+            accountSidebarCloseTimerRef.current = null;
+        }, 260);
     };
 
     return (
@@ -521,6 +616,18 @@ const ProductCatalog = () => {
         >
             <div className="catalog-header glass-panel">
                 <div className="client-header-left">
+                    {isClientLike && (
+                        <button
+                            className={`client-menu-button ${showProfileModal ? 'is-open' : ''}`}
+                            type="button"
+                            onClick={showProfileModal ? closeAccountSidebar : openProfileModal}
+                            aria-label={showProfileModal ? 'Close account settings' : 'Open account settings'}
+                            aria-expanded={showProfileModal}
+                            title={showProfileModal ? 'Close account settings' : 'Account settings'}
+                        >
+                            {showProfileModal ? <X size={20} /> : <Menu size={20} />}
+                        </button>
+                    )}
                     <button className="client-profile-button" type="button" title="Profile">
                         {profileImagePreview ? (
                             <img src={profileImagePreview} alt="Profile" className="client-profile-image" />
@@ -539,9 +646,6 @@ const ProductCatalog = () => {
                 <div className="client-header-right">
                     {isClientLike && (
                         <>
-                            <button className="client-settings-button" onClick={openProfileModal} title="Settings">
-                                <Settings size={20} />
-                            </button>
                             <button className="client-order-button" onClick={() => navigate('/order-info')} title="Order Info">
                                 <Package size={20} />
                             </button>
@@ -570,40 +674,40 @@ const ProductCatalog = () => {
             <div className="product-toolbar glass-panel">
                 <div className="filter-group search-filter">
                     <div className="search-input-wrap-client">
-                        <input
-                            type="text"
-                            placeholder="Search by name or category..."
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                        />
+                        <div className={`catalog-search-field ${hasSearchTerm ? 'has-search-term' : ''}`}>
+                            <input
+                                ref={searchInputRef}
+                                type="text"
+                                placeholder="Search by name or category..."
+                                value={search}
+                                onChange={(e) => setSearch(e.target.value)}
+                            />
+                            <button
+                                type="button"
+                                className="catalog-search-button"
+                                onClick={() => searchInputRef.current?.focus()}
+                                aria-label="Search products"
+                                title={hasSearchTerm ? `${visibleProducts.length} product${visibleProducts.length === 1 ? '' : 's'} found` : 'Search products'}
+                            >
+                                <Search size={19} />
+                                {hasSearchTerm && <span className="catalog-search-indicator" aria-hidden="true" />}
+                            </button>
+                        </div>
                         <div className="speech-control">
-                            {isListening && (
+                            {voiceSearchActive && (
                                 <div className="voice-listening-popover" role="status" aria-live="polite">
-                                    <div className="voice-listening-toolbar">
-                                        <button
-                                            type="button"
-                                            className="voice-listening-close"
-                                            onClick={handleSpeechToggle}
-                                            aria-label="Stop voice search"
-                                            title="Stop voice search"
-                                        >
-                                            <X size={14} />
-                                        </button>
-                                        <Mic size={18} />
-                                        <span className="voice-listening-focus" aria-hidden="true" />
-                                    </div>
-                                    <div className="voice-listening-label">Tell me what you're looking for.</div>
+                                    <span>{voicePrompt}</span>
                                 </div>
                             )}
                             <button
                                 type="button"
-                                className={`speech-button ${isListening ? 'listening' : ''}`}
+                                className={`speech-button ${voiceSearchActive ? 'listening' : ''}`}
                                 onClick={handleSpeechToggle}
-                                title={speechSupported ? (isListening ? 'Stop voice input' : 'Start voice input') : 'Speech not supported'}
-                                aria-label={isListening ? 'Stop voice input' : 'Start voice input'}
+                                title={speechSupported ? (voiceSearchActive ? 'Mute voice input' : 'Start voice input') : 'Speech not supported'}
+                                aria-label={voiceSearchActive ? 'Mute voice input' : 'Start voice input'}
                                 disabled={!speechSupported}
                             >
-                                {isListening ? <Mic size={18} /> : <MicOff size={18} />}
+                                {voiceSearchActive ? <Mic size={18} /> : <MicOff size={18} />}
                             </button>
                         </div>
                     </div>
@@ -700,85 +804,121 @@ const ProductCatalog = () => {
             </div>
 
             {showProfileModal && (
-                <div className="modal-overlay" onClick={() => setShowProfileModal(false)}>
-                    <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-                        <div className="modal-header">
-                            <h3>Profile Settings</h3>
-                            <button className="close-button" onClick={() => setShowProfileModal(false)}><X size={24} /></button>
+                <div className={`account-sidebar-overlay ${isAccountSidebarClosing ? 'is-closing' : 'is-open'}`} onClick={closeAccountSidebar}>
+                    <aside className="account-sidebar" onClick={(e) => e.stopPropagation()} aria-label="Account settings">
+                        <div className="account-sidebar-header">
+                            <button className="account-sidebar-avatar-button" type="button" onClick={() => setAccountSettingsSection('profilePicture')}>
+                                {profileImagePreview ? (
+                                    <img src={profileImagePreview} alt="Profile" className="account-sidebar-avatar" />
+                                ) : (
+                                    <div className="account-sidebar-avatar account-sidebar-avatar-fallback">{displayName ? displayName[0].toUpperCase() : 'C'}</div>
+                                )}
+                            </button>
+                            <div className="account-sidebar-identity">
+                                <h3>{displayName || 'Client'}</h3>
+                                <p>{user?.email || 'Guest'}</p>
+                            </div>
+                            <button className="close-button" onClick={closeAccountSidebar} aria-label="Close account settings"><X size={24} /></button>
+                        </div>
+
+                        <div className="account-sidebar-nav" aria-label="Edit personal information sections">
+                            <div className="account-sidebar-nav-title">Edit Personal Information</div>
+                            <button type="button" className={accountSettingsSection === 'profilePicture' ? 'active' : ''} onClick={() => setAccountSettingsSection('profilePicture')}>
+                                Profile Picture
+                            </button>
+                            <button type="button" className={accountSettingsSection === 'personalInfo' ? 'active' : ''} onClick={() => setAccountSettingsSection('personalInfo')}>
+                                Name, Email, Contact, Address
+                            </button>
+                            <button type="button" className={accountSettingsSection === 'discountVerification' ? 'active' : ''} onClick={() => setAccountSettingsSection('discountVerification')}>
+                                Discount Verification Request
+                            </button>
+                            <button type="button" className={accountSettingsSection === 'changePassword' ? 'active' : ''} onClick={() => setAccountSettingsSection('changePassword')}>
+                                Change Password
+                            </button>
                         </div>
 
                         {profileLoading ? (
                             <p>Loading...</p>
                         ) : (
                             <form onSubmit={handleProfileSave} className="profile-form">
-                                <div className="profile-image-row">
-                                    {profileImagePreview ? (
-                                        <img src={profileImagePreview} alt="Profile Preview" className="profile-image-preview" />
-                                    ) : (
-                                        <div className="profile-image-preview profile-image-fallback">{displayName ? displayName[0].toUpperCase() : 'C'}</div>
-                                    )}
-                                    <div className="profile-image-picker">
-                                        <label htmlFor="client-profile-image" className="field-label">Profile Image</label>
-                                        <input
-                                            id="client-profile-image"
-                                            type="file"
-                                            accept="image/*"
-                                            onChange={(e) => {
-                                                const file = e.target.files?.[0];
-                                                setProfileImageFile(file || null);
-                                                if (file) {
-                                                    setProfileImagePreview(URL.createObjectURL(file));
-                                                }
-                                            }}
-                                        />
+                                {accountSettingsSection === 'profilePicture' && (
+                                    <div className="account-settings-page">
+                                        <h4>Profile Picture</h4>
+                                        <div className="profile-image-row">
+                                            {profileImagePreview ? (
+                                                <img src={profileImagePreview} alt="Profile Preview" className="profile-image-preview" />
+                                            ) : (
+                                                <div className="profile-image-preview profile-image-fallback">{displayName ? displayName[0].toUpperCase() : 'C'}</div>
+                                            )}
+                                            <div className="profile-image-picker">
+                                                <label htmlFor="client-profile-image" className="field-label">Profile Image</label>
+                                                <input
+                                                    id="client-profile-image"
+                                                    type="file"
+                                                    accept="image/*"
+                                                    onChange={(e) => {
+                                                        const file = e.target.files?.[0];
+                                                        setProfileImageFile(file || null);
+                                                        if (file) {
+                                                            setProfileImagePreview(URL.createObjectURL(file));
+                                                        }
+                                                    }}
+                                                />
+                                            </div>
+                                        </div>
                                     </div>
-                                </div>
+                                )}
 
-                                <div className="form-row">
-                                    <div className="form-field">
-                                        <label className="field-label" htmlFor="client-first-name">First Name</label>
-                                        <input id="client-first-name" name="first_name" value={profileEdit.first_name || ''} onChange={handleProfileEditChange} placeholder="First Name" />
-                                    </div>
-                                    <div className="form-field">
-                                        <label className="field-label" htmlFor="client-last-name">Last Name</label>
-                                        <input id="client-last-name" name="last_name" value={profileEdit.last_name || ''} onChange={handleProfileEditChange} placeholder="Last Name" />
-                                    </div>
-                                </div>
+                                {accountSettingsSection === 'personalInfo' && (
+                                    <div className="account-settings-page">
+                                        <h4>Personal Details</h4>
+                                        <div className="form-row">
+                                            <div className="form-field">
+                                                <label className="field-label" htmlFor="client-first-name">First Name</label>
+                                                <input id="client-first-name" name="first_name" value={profileEdit.first_name || ''} onChange={handleProfileEditChange} placeholder="First Name" />
+                                            </div>
+                                            <div className="form-field">
+                                                <label className="field-label" htmlFor="client-last-name">Last Name</label>
+                                                <input id="client-last-name" name="last_name" value={profileEdit.last_name || ''} onChange={handleProfileEditChange} placeholder="Last Name" />
+                                            </div>
+                                        </div>
 
-                                <div className="form-row">
-                                    <div className="form-field">
-                                        <label className="field-label" htmlFor="client-suffix">Suffix (Optional)</label>
-                                        <select id="client-suffix" name="suffix" value={profileEdit.suffix || ''} onChange={handleProfileEditChange}>
-                                            <option value="">None</option>
-                                            <option value="Jr.">Jr.</option>
-                                            <option value="Sr.">Sr.</option>
-                                            <option value="II">II</option>
-                                            <option value="III">III</option>
-                                            <option value="IV">IV</option>
-                                            <option value="V">V</option>
-                                        </select>
-                                    </div>
-                                </div>
+                                        <div className="form-row">
+                                            <div className="form-field">
+                                                <label className="field-label" htmlFor="client-suffix">Suffix (Optional)</label>
+                                                <select id="client-suffix" name="suffix" value={profileEdit.suffix || ''} onChange={handleProfileEditChange}>
+                                                    <option value="">None</option>
+                                                    <option value="Jr.">Jr.</option>
+                                                    <option value="Sr.">Sr.</option>
+                                                    <option value="II">II</option>
+                                                    <option value="III">III</option>
+                                                    <option value="IV">IV</option>
+                                                    <option value="V">V</option>
+                                                </select>
+                                            </div>
+                                        </div>
 
-                                <div className="form-row">
-                                    <div className="form-field">
-                                        <label className="field-label" htmlFor="client-email">Email</label>
-                                        <input id="client-email" name="email" value={profileEdit.email || ''} onChange={handleProfileEditChange} placeholder="Email" />
-                                    </div>
-                                    <div className="form-field">
-                                        <label className="field-label" htmlFor="client-contact-number">Contact Number</label>
-                                        <input id="client-contact-number" name="contact_number" value={profileEdit.contact_number || ''} onChange={handleProfileEditChange} placeholder="Contact Number" />
-                                    </div>
-                                </div>
+                                        <div className="form-row">
+                                            <div className="form-field">
+                                                <label className="field-label" htmlFor="client-email">Email</label>
+                                                <input id="client-email" name="email" value={profileEdit.email || ''} onChange={handleProfileEditChange} placeholder="Email" />
+                                            </div>
+                                            <div className="form-field">
+                                                <label className="field-label" htmlFor="client-contact-number">Contact Number</label>
+                                                <input id="client-contact-number" name="contact_number" value={profileEdit.contact_number || ''} onChange={handleProfileEditChange} placeholder="Contact Number" />
+                                            </div>
+                                        </div>
 
-                                <div className="form-row form-row-full">
-                                    <div className="form-field">
-                                        <label className="field-label" htmlFor="client-address">Address</label>
-                                        <textarea id="client-address" name="address" value={profileEdit.address || ''} onChange={handleProfileEditChange} placeholder="Address" rows={3} />
+                                        <div className="form-row form-row-full">
+                                            <div className="form-field">
+                                                <label className="field-label" htmlFor="client-address">Address</label>
+                                                <textarea id="client-address" name="address" value={profileEdit.address || ''} onChange={handleProfileEditChange} placeholder="Address" rows={3} />
+                                            </div>
+                                        </div>
                                     </div>
-                                </div>
+                                )}
 
-                                {(() => {
+                                {accountSettingsSection === 'discountVerification' && (() => {
                                     const hasApprovedDiscount = Number(discountState.senior_verified) === 1 || Number(discountState.pwd_verified) === 1;
                                     const hasPendingRequest = (Number(discountState.is_senior) === 1 && discountState.senior_verified === null)
                                         || (Number(discountState.is_pwd) === 1 && discountState.pwd_verified === null);
@@ -880,7 +1020,8 @@ const ProductCatalog = () => {
                                     );
                                 })()}
 
-                                <div className="password-section">
+                                {accountSettingsSection === 'changePassword' && (
+                                <div className="password-section account-settings-page">
                                     <h4>Change Password</h4>
                                     <div className="password-row">
                                         <div className="password-input-wrap">
@@ -935,12 +1076,13 @@ const ProductCatalog = () => {
                                         )}
                                     </div>
                                 </div>
+                                )}
 
                                 <div className="modal-actions modal-actions-top">
                                     <button type="button" className="btn-logout" onClick={handleLogout}>
                                         <LogOut size={16} /> Logout
                                     </button>
-                                    <button type="button" className="btn-secondary" onClick={() => setShowProfileModal(false)}>
+                                    <button type="button" className="btn-secondary" onClick={closeAccountSidebar}>
                                         Cancel
                                     </button>
                                     <button type="submit" className="btn-primary" disabled={profileLoading || passwordLoading}>
@@ -949,7 +1091,7 @@ const ProductCatalog = () => {
                                 </div>
                             </form>
                         )}
-                    </div>
+                    </aside>
                 </div>
             )}
         </div>

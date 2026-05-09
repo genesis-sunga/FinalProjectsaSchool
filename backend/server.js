@@ -4043,9 +4043,13 @@ app.get('/api/user-profile/:userId', (req, res) => {
 // --- 28.1 UPDATE ACCOUNT PROFILE ---
 app.put('/api/account/:userId', (req, res) => {
     const { userId } = req.params;
-    const { first_name, last_name, email, suffix, profile_image_url, id_image_url } = req.body;
+    const { first_name, last_name, email, suffix, profile_image_url, id_image_url, contact_number, address } = req.body;
     const hasSuffix = Object.prototype.hasOwnProperty.call(req.body || {}, 'suffix');
+    const hasContactNumber = Object.prototype.hasOwnProperty.call(req.body || {}, 'contact_number');
+    const hasAddress = Object.prototype.hasOwnProperty.call(req.body || {}, 'address');
     const rawSuffix = hasSuffix ? String(suffix || '').trim() : null;
+    const nextContactNumber = hasContactNumber ? String(contact_number || '').trim() : null;
+    const nextAddress = hasAddress ? String(address || '').trim() : null;
     const suffixAliases = {
         'JR': 'Jr.',
         'JR.': 'Jr.',
@@ -4069,11 +4073,17 @@ app.put('/api/account/:userId', (req, res) => {
 
     const sql = `
         UPDATE user_accounts
-        SET first_name = ?, last_name = ?, email = ?, profile_image_url = ?, suffix = COALESCE(?, suffix)
+        SET first_name = ?,
+            last_name = ?,
+            email = ?,
+            profile_image_url = ?,
+            suffix = COALESCE(?, suffix),
+            contact_number = COALESCE(?, contact_number),
+            address = COALESCE(?, address)
         WHERE user_id = ? AND is_deleted = 0
     `;
 
-    db.query(sql, [first_name, last_name, email, nextProfileImageUrl, normalizedSuffix, userId], (err, result) => {
+    db.query(sql, [first_name, last_name, email, nextProfileImageUrl, normalizedSuffix, nextContactNumber, nextAddress, userId], (err, result) => {
         if (err) return res.status(500).json({ message: 'Database error' });
         if (result.affectedRows === 0) return res.status(404).json({ message: 'User not found' });
         res.json({ message: 'Account updated successfully' });
