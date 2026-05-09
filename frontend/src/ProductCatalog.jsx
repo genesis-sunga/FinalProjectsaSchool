@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import Swal from 'sweetalert2';
-import { ShoppingCart, Package, LogOut, Eye, EyeOff, X, Mic, MicOff, Search, Menu } from 'lucide-react';
+import { ShoppingCart, LogOut, Eye, EyeOff, X, Mic, MicOff, Search, Menu } from 'lucide-react';
 import './ProductCatalog.css';
 
 const ALLOWED_SUFFIXES = ['', 'Jr.', 'Sr.', 'II', 'III', 'IV', 'V'];
@@ -628,7 +628,13 @@ const ProductCatalog = () => {
                             {showProfileModal ? <X size={20} /> : <Menu size={20} />}
                         </button>
                     )}
-                    <button className="client-profile-button" type="button" title="Profile">
+                    <button
+                        className="client-profile-button"
+                        type="button"
+                        onClick={() => navigate('/account/settings')}
+                        aria-label="Open profile settings"
+                        title="Profile settings"
+                    >
                         {profileImagePreview ? (
                             <img src={profileImagePreview} alt="Profile" className="client-profile-image" />
                         ) : (
@@ -646,9 +652,6 @@ const ProductCatalog = () => {
                 <div className="client-header-right">
                     {isClientLike && (
                         <>
-                            <button className="client-order-button" onClick={() => navigate('/order-info')} title="Order Info">
-                                <Package size={20} />
-                            </button>
                             <button className="client-cart-button" onClick={() => navigate('/cart')} title="Cart">
                                 <ShoppingCart size={20} />
                             </button>
@@ -807,7 +810,7 @@ const ProductCatalog = () => {
                 <div className={`account-sidebar-overlay ${isAccountSidebarClosing ? 'is-closing' : 'is-open'}`} onClick={closeAccountSidebar}>
                     <aside className="account-sidebar" onClick={(e) => e.stopPropagation()} aria-label="Account settings">
                         <div className="account-sidebar-header">
-                            <button className="account-sidebar-avatar-button" type="button" onClick={() => setAccountSettingsSection('profilePicture')}>
+                            <button className="account-sidebar-avatar-button" type="button" onClick={() => navigate('/account/profile-picture')}>
                                 {profileImagePreview ? (
                                     <img src={profileImagePreview} alt="Profile" className="account-sidebar-avatar" />
                                 ) : (
@@ -822,18 +825,37 @@ const ProductCatalog = () => {
                         </div>
 
                         <div className="account-sidebar-nav" aria-label="Edit personal information sections">
-                            <div className="account-sidebar-nav-title">Edit Personal Information</div>
-                            <button type="button" className={accountSettingsSection === 'profilePicture' ? 'active' : ''} onClick={() => setAccountSettingsSection('profilePicture')}>
-                                Profile Picture
+                            <button
+                                type="button"
+                                className="account-sidebar-nav-title account-sidebar-main-link"
+                                onClick={() => navigate('/account/settings')}
+                            >
+                                Edit Personal Information
                             </button>
-                            <button type="button" className={accountSettingsSection === 'personalInfo' ? 'active' : ''} onClick={() => setAccountSettingsSection('personalInfo')}>
-                                Name, Email, Contact, Address
+                            <button
+                                type="button"
+                                className="account-sidebar-nav-title account-sidebar-main-link"
+                                onClick={() => navigate('/order-info')}
+                            >
+                                Order Details
                             </button>
-                            <button type="button" className={accountSettingsSection === 'discountVerification' ? 'active' : ''} onClick={() => setAccountSettingsSection('discountVerification')}>
-                                Discount Verification Request
-                            </button>
-                            <button type="button" className={accountSettingsSection === 'changePassword' ? 'active' : ''} onClick={() => setAccountSettingsSection('changePassword')}>
-                                Change Password
+                            <div className="account-sidebar-contact-info">
+                                <h4>Contact and Information</h4>
+                                <div>
+                                    <strong>CONTACT DETAILS</strong>
+                                    <p>Email: adminacc@gmail.com</p>
+                                    <p>Contact number: 091234565789</p>
+                                </div>
+                                <div>
+                                    <strong>LOCATION</strong>
+                                    <p>Address: Bulag St. Brgy. Katarata, DImahanap City, Baog, Pipilins 8080</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="account-sidebar-actions">
+                            <button type="button" className="btn-logout" onClick={handleLogout}>
+                                <LogOut size={16} /> Logout
                             </button>
                         </div>
 

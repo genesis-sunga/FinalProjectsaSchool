@@ -1,0 +1,237 @@
+.account-settings-home-screen {
+    min-height: 100vh;
+    background: #e9f7f6;
+    color: #0f172a;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.account-settings-home-header {
+    width: 100%;
+    margin: 0 0 18px;
+    display: grid;
+    grid-template-columns: auto minmax(180px, 0.55fr) minmax(260px, 1.45fr) auto;
+    align-items: center;
+    gap: 18px;
+    background: #053961;
+    color: #ffffff;
+    border-radius: 14px;
+    padding: 20px 28px;
+    box-sizing: border-box;
+    box-shadow: 0 16px 38px rgba(15, 23, 42, 0.16);
+}
+
+.account-settings-home-back {
+    width: 42px;
+    height: 42px;
+    border: none;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.16);
+    color: #ffffff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.account-settings-home-identity {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.account-settings-home-identity strong,
+.account-settings-home-identity span {
+    overflow-wrap: anywhere;
+}
+
+.account-settings-home-identity span {
+    color: rgba(255, 255, 255, 0.82);
+    font-size: 0.9rem;
+}
+
+.account-settings-home-header-copy {
+    min-width: 0;
+    justify-self: center;
+    text-align: center;
+}
+
+.account-settings-home-header-copy h2 {
+    margin: 0 0 4px;
+    color: #ffffff;
+    font-size: clamp(1.25rem, 2vw, 2rem);
+    line-height: 1.1;
+}
+
+.account-settings-home-header-copy p {
+    margin: 0;
+    color: rgba(255, 255, 255, 0.82);
+    font-size: 0.94rem;
+    line-height: 1.35;
+}
+
+.account-settings-home-shell {
+    width: 100%;
+    margin: 0;
+    display: grid;
+    grid-template-columns: minmax(320px, 0.85fr) minmax(0, 1.65fr);
+    gap: 20px;
+    align-items: stretch;
+    min-height: calc(100vh - 122px);
+}
+
+.account-settings-home-intro,
+.account-settings-options {
+    background: #ffffff;
+    border: 1px solid #d6ebe9;
+    border-radius: 14px;
+    box-shadow: 0 12px 34px rgba(15, 23, 42, 0.1);
+}
+
+.account-settings-home-intro {
+    padding: 22px;
+    min-height: 100%;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.account-settings-home-kicker {
+    margin: 0 0 6px;
+    color: #0e7490;
+    font-size: 0.84rem;
+    font-weight: 900;
+    text-transform: uppercase;
+}
+
+.account-settings-home-intro h1 {
+    margin: 0 0 8px;
+    color: #083344;
+    font-size: 1.75rem;
+    line-height: 1.18;
+}
+
+.account-settings-home-intro p {
+    margin: 0;
+    color: #475569;
+    line-height: 1.5;
+}
+
+.account-settings-options {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-auto-rows: minmax(118px, 1fr);
+    gap: 14px;
+    padding: 18px;
+}
+
+.account-settings-option {
+    width: 100%;
+    min-height: 118px;
+    border: 1px solid #d6ebe9;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #0f172a;
+    padding: 14px;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 14px;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+
+.account-settings-option:hover {
+    background: #ccfbf1;
+    border-color: #0ea5a8;
+    transform: translateY(-1px);
+}
+
+.account-settings-option:focus-visible,
+.account-settings-home-back:focus-visible {
+    outline: 3px solid #facc15;
+    outline-offset: 3px;
+}
+
+.account-settings-option-icon {
+    width: 46px;
+    height: 46px;
+    border-radius: 10px;
+    background: #053961;
+    color: #ffffff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.account-settings-option-copy {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.account-settings-option-copy strong {
+    color: #083344;
+    font-size: 1rem;
+    line-height: 1.25;
+}
+
+.account-settings-option-copy span {
+    color: #475569;
+    font-size: 0.92rem;
+    line-height: 1.35;
+}
+
+.account-settings-option-arrow {
+    color: #64748b;
+}
+
+@media (max-width: 920px) {
+    .account-settings-home-header {
+        grid-template-columns: auto minmax(0, 1fr) auto;
+    }
+
+    .account-settings-home-header-copy {
+        grid-column: 1 / -1;
+        justify-self: stretch;
+        text-align: left;
+    }
+
+    .account-settings-home-shell {
+        grid-template-columns: 1fr;
+        min-height: 0;
+    }
+
+    .account-settings-options {
+        grid-template-columns: 1fr;
+        grid-auto-rows: auto;
+    }
+}
+
+@media (max-width: 720px) {
+    .account-settings-home-screen {
+        padding: 14px;
+    }
+
+    .account-settings-home-header {
+        grid-template-columns: auto minmax(0, 1fr);
+        padding: 16px;
+    }
+
+    .account-settings-home-header .btn-logout {
+        grid-column: 1 / -1;
+        justify-self: stretch;
+    }
+
+    .account-settings-option {
+        grid-template-columns: auto minmax(0, 1fr);
+    }
+
+    .account-settings-option-arrow {
+        display: none;
+    }
+}

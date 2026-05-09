@@ -13,6 +13,11 @@ import Checkout from './Checkout';
 import OrderHistory from './OrderHistory';
 import AdminDashboard from './AdminDashboard';
 import WorkerDashboard from './WorkerDashboard';
+import AccountSettingsPage from './AccountSettingsPage';
+import ProfilePictureSettings from './ProfilePictureSettings';
+import PersonalInfoSettings from './PersonalInfoSettings';
+import DiscountVerificationSettings from './DiscountVerificationSettings';
+import ChangePasswordSettings from './ChangePasswordSettings';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
     <React.StrictMode>
@@ -29,6 +34,11 @@ ReactDOM.createRoot(document.getElementById('root')).render(
                 <Route path="/checkout" element={<Checkout />} />
                 <Route path="/order-info" element={<OrderHistory />} />
                 <Route path="/order-history" element={<OrderHistory />} />
+                <Route path="/account/settings" element={<AccountSettingsPage />} />
+                <Route path="/account/profile-picture" element={<ProfilePictureSettings />} />
+                <Route path="/account/personal-info" element={<PersonalInfoSettings />} />
+                <Route path="/account/discount-verification" element={<DiscountVerificationSettings />} />
+                <Route path="/account/change-password" element={<ChangePasswordSettings />} />
                 <Route path="/admin-dashboard" element={<AdminDashboard />} />
                 <Route path="/worker-dashboard" element={<WorkerDashboard />} />
             </Routes>
