@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Apr 24, 2026 at 07:37 AM
+-- Generation Time: May 19, 2026 at 02:53 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -41,7 +41,12 @@ CREATE TABLE `background_settings` (
 --
 
 INSERT INTO `background_settings` (`setting_id`, `setting_name`, `setting_value`, `description`, `created_at`, `updated_at`) VALUES
-(0, 'client_background', 'http://localhost:5000/uploads/1776399956093-322818353.png', 'Background image for client/worker pages', '2026-03-27 13:03:34', '2026-04-17 04:25:56');
+(0, 'client_background', 'http://localhost:5000/uploads/1777526326279-698665726.png', 'Background image for client/worker pages', '2026-03-27 13:03:34', '2026-04-30 05:18:46'),
+(1, 'auth_background', '', 'Website setting: auth_background', '2026-05-08 00:52:32', '2026-05-08 00:52:32'),
+(2, 'client_theme_page_bg', '#dff7f5', 'Website setting: client_theme_page_bg', '2026-05-08 00:52:32', '2026-05-15 14:20:12'),
+(3, 'client_theme_soft_bg', '#ccfbf1', 'Website setting: client_theme_soft_bg', '2026-05-08 00:52:32', '2026-05-15 14:20:12'),
+(4, 'client_theme_card_bg', '#ffffff', 'Website setting: client_theme_card_bg', '2026-05-08 00:52:32', '2026-05-15 14:20:12'),
+(5, 'client_theme_panel_bg', '#f2fbfa', 'Website setting: client_theme_panel_bg', '2026-05-08 00:52:32', '2026-05-15 14:20:12');
 
 -- --------------------------------------------------------
 
@@ -84,7 +89,8 @@ INSERT INTO `cash_register_entries` (`entry_id`, `user_id`, `entry_type`, `amoun
 (5, 3, 'cash', 152.00, 'Cash payment accepted for Order #7 | (Invoice INV-7-1776336892947) | Customer: Megurine Luka | By: Harijie Mabilin', '2026-04-16 10:57:53'),
 (6, 2, 'cash', 84.55, 'Cash payment accepted for Order #9 | (Invoice INV-9-1776336988724) | Customer: Megurine Luka | By: TongTong Fish', '2026-04-16 11:02:27'),
 (7, 2, 'cash', 20150.00, 'Cash payment accepted for Order #12 | (Invoice INV-12-1776475820595) | Customer: Megurine Luka | By: TongTong Fish', '2026-04-21 03:21:21'),
-(8, 2, 'cash', 310.00, 'Cash payment accepted for Order #11 | (Invoice INV-11-1776398836096) | Customer: Megurine Luka | By: TongTong Fish', '2026-04-21 03:21:33');
+(8, 2, 'cash', 310.00, 'Cash payment accepted for Order #11 | (Invoice INV-11-1776398836096) | Customer: Megurine Luka | By: TongTong Fish', '2026-04-21 03:21:33'),
+(9, 2, 'cash', 280.25, 'Cash payment accepted for Order #15 | (Invoice INV-15-1777599818985) | Customer: Megurine Luka | By: TongTong Fish | Notes: Done', '2026-05-08 00:52:56');
 
 -- --------------------------------------------------------
 
@@ -148,7 +154,10 @@ INSERT INTO `invoices` (`invoice_id`, `order_id`, `invoice_number`, `customer_na
 (10, 10, 'INV-10-1776338039350', NULL, NULL, NULL, NULL, 'cash_on_store', NULL, NULL, NULL, 'issued', '2026-04-16 11:13:59'),
 (11, 11, 'INV-11-1776398836096', NULL, NULL, NULL, NULL, 'cash_on_store', '/uploads/invoices/INV-11-1776398836096.pdf', NULL, NULL, 'issued', '2026-04-17 04:07:16'),
 (12, 12, 'INV-12-1776475820595', NULL, NULL, NULL, NULL, 'cash_on_store', NULL, NULL, NULL, 'issued', '2026-04-18 01:30:20'),
-(13, 13, 'INV-13-1776741922377', NULL, NULL, NULL, NULL, 'cash_on_store', NULL, NULL, NULL, 'issued', '2026-04-21 03:25:22');
+(13, 13, 'INV-13-1776741922377', NULL, NULL, NULL, NULL, 'cash_on_store', NULL, NULL, NULL, 'issued', '2026-04-21 03:25:22'),
+(14, 14, 'INV-14-1777273893172', 'Megurine Luka', 'mharijie@gmail.com', '12321423423', 190.00, 'cash_on_store', NULL, NULL, NULL, 'issued', '2026-04-27 07:11:33'),
+(15, 15, 'INV-15-1777599818985', NULL, NULL, NULL, NULL, 'cash_on_store', NULL, NULL, NULL, 'issued', '2026-05-01 01:43:38'),
+(16, 16, 'INV-20260509-001', NULL, NULL, NULL, NULL, 'cash_on_store', '/uploads/invoices/INV-20260509-001.pdf', NULL, NULL, 'issued', '2026-05-09 09:44:28');
 
 -- --------------------------------------------------------
 
@@ -190,7 +199,13 @@ INSERT INTO `invoice_requests` (`request_id`, `invoice_id`, `request_time`, `req
 (19, 12, '2026-04-18 01:30:25', 4, 1),
 (20, 12, '2026-04-21 03:21:24', 2, 1),
 (21, 11, '2026-04-21 03:21:36', 2, 1),
-(22, 13, '2026-04-21 03:25:25', 4, 1);
+(22, 13, '2026-04-21 03:25:25', 4, 1),
+(23, 13, '2026-04-27 06:58:16', 2, 1),
+(24, 14, '2026-04-27 07:11:36', 4, 1),
+(25, 14, '2026-04-27 07:12:33', 2, 1),
+(26, 15, '2026-05-01 01:43:41', 4, 1),
+(27, 15, '2026-05-08 00:52:59', 2, 1),
+(28, 16, '2026-05-09 09:44:32', 4, 1);
 
 -- --------------------------------------------------------
 
@@ -200,6 +215,8 @@ INSERT INTO `invoice_requests` (`request_id`, `invoice_id`, `request_time`, `req
 
 CREATE TABLE `orders` (
   `order_id` int(11) NOT NULL,
+  `order_number` int(11) DEFAULT NULL,
+  `order_date` date DEFAULT NULL,
   `user_id` int(11) DEFAULT NULL,
   `customer_name` varchar(120) DEFAULT NULL,
   `email` varchar(120) DEFAULT NULL,
@@ -220,20 +237,23 @@ CREATE TABLE `orders` (
 -- Dumping data for table `orders`
 --
 
-INSERT INTO `orders` (`order_id`, `user_id`, `customer_name`, `email`, `contact_number`, `total_amount`, `shipping_address`, `payment_method`, `paid_by_user_id`, `paid_by_name`, `invoice_pdf_path`, `status`, `cancellation_status`, `created_at`, `updated_at`) VALUES
-(1, 4, NULL, NULL, NULL, 178.00, 'Japan', 'cash_on_store', 2, 'TongTong Fish', '/uploads/invoices/INV-1-1775790103495.pdf', 'completed', 'none', '2026-04-10 03:01:43', '2026-04-10 14:59:46'),
-(2, 4, NULL, NULL, NULL, 295.00, 'Japan', 'cash_on_store', 2, 'TongTong Fish', '/uploads/invoices/INV-2-1775831871302.pdf', 'completed', 'none', '2026-04-10 14:37:51', '2026-04-10 14:56:58'),
-(3, 4, NULL, NULL, NULL, 300.00, 'Japan', 'cash_on_store', 2, 'TongTong Fish', '/uploads/invoices/INV-3-1775835231563.pdf', 'completed', 'none', '2026-04-10 15:33:51', '2026-04-10 15:38:41'),
-(4, 4, NULL, NULL, NULL, 703.00, 'Japan', 'cash_on_store', NULL, NULL, NULL, 'cancelled', 'approved', '2026-04-16 09:49:34', '2026-04-16 10:12:45'),
-(5, 4, NULL, NULL, NULL, 456.00, 'Japan', 'cash_on_store', NULL, NULL, NULL, 'cancelled', 'approved', '2026-04-16 10:20:03', '2026-04-16 10:22:00'),
-(6, 4, NULL, NULL, NULL, 456.00, 'Japan', 'cash_on_store', NULL, NULL, '/uploads/invoices/INV-6-1776335314964.pdf', 'cancelled', 'approved', '2026-04-16 10:28:34', '2026-04-16 10:29:34'),
-(7, 4, NULL, NULL, NULL, 152.00, 'Japan', 'cash_on_store', 3, 'Harijie Mabilin', NULL, 'completed', 'none', '2026-04-16 10:54:52', '2026-04-16 10:57:53'),
-(8, 4, NULL, NULL, NULL, 84.55, 'Japan', 'cash_on_store', NULL, NULL, NULL, 'cancelled', 'approved', '2026-04-16 10:55:32', '2026-04-16 11:00:01'),
-(9, 4, NULL, NULL, NULL, 84.55, 'Japan', 'cash_on_store', 2, 'TongTong Fish', '/uploads/invoices/INV-9-1776336988724.pdf', 'completed', 'none', '2026-04-16 10:56:28', '2026-04-17 04:23:15'),
-(10, 4, NULL, NULL, NULL, 152.00, 'Japan', 'cash_on_store', NULL, NULL, NULL, 'cancelled', 'approved', '2026-04-16 11:13:59', '2026-04-16 11:14:41'),
-(11, 4, NULL, NULL, NULL, 310.00, 'Japan', 'cash_on_store', 2, 'TongTong Fish', '/uploads/invoices/INV-11-1776398836096.pdf', 'completed', 'none', '2026-04-17 04:07:16', '2026-04-21 03:21:33'),
-(12, 4, NULL, NULL, NULL, 20150.00, 'Japan', 'cash_on_store', 2, 'TongTong Fish', NULL, 'completed', 'none', '2026-04-18 01:30:20', '2026-04-21 03:21:21'),
-(13, 4, NULL, NULL, NULL, 142.50, 'Japan', 'cash_on_store', NULL, NULL, NULL, 'pending', 'none', '2026-04-21 03:25:22', '2026-04-21 03:25:22');
+INSERT INTO `orders` (`order_id`, `order_number`, `order_date`, `user_id`, `customer_name`, `email`, `contact_number`, `total_amount`, `shipping_address`, `payment_method`, `paid_by_user_id`, `paid_by_name`, `invoice_pdf_path`, `status`, `cancellation_status`, `created_at`, `updated_at`) VALUES
+(1, NULL, NULL, 4, NULL, NULL, NULL, 178.00, 'Japan', 'cash_on_store', 2, 'TongTong Fish', '/uploads/invoices/INV-1-1775790103495.pdf', 'completed', 'none', '2026-04-10 03:01:43', '2026-04-10 14:59:46'),
+(2, NULL, NULL, 4, NULL, NULL, NULL, 295.00, 'Japan', 'cash_on_store', 2, 'TongTong Fish', '/uploads/invoices/INV-2-1775831871302.pdf', 'completed', 'none', '2026-04-10 14:37:51', '2026-04-10 14:56:58'),
+(3, NULL, NULL, 4, NULL, NULL, NULL, 300.00, 'Japan', 'cash_on_store', 2, 'TongTong Fish', '/uploads/invoices/INV-3-1775835231563.pdf', 'completed', 'none', '2026-04-10 15:33:51', '2026-04-10 15:38:41'),
+(4, NULL, NULL, 4, NULL, NULL, NULL, 703.00, 'Japan', 'cash_on_store', NULL, NULL, NULL, 'cancelled', 'approved', '2026-04-16 09:49:34', '2026-04-16 10:12:45'),
+(5, NULL, NULL, 4, NULL, NULL, NULL, 456.00, 'Japan', 'cash_on_store', NULL, NULL, NULL, 'cancelled', 'approved', '2026-04-16 10:20:03', '2026-04-16 10:22:00'),
+(6, NULL, NULL, 4, NULL, NULL, NULL, 456.00, 'Japan', 'cash_on_store', NULL, NULL, '/uploads/invoices/INV-6-1776335314964.pdf', 'cancelled', 'approved', '2026-04-16 10:28:34', '2026-04-16 10:29:34'),
+(7, NULL, NULL, 4, NULL, NULL, NULL, 152.00, 'Japan', 'cash_on_store', 3, 'Harijie Mabilin', NULL, 'completed', 'none', '2026-04-16 10:54:52', '2026-04-16 10:57:53'),
+(8, NULL, NULL, 4, NULL, NULL, NULL, 84.55, 'Japan', 'cash_on_store', NULL, NULL, NULL, 'cancelled', 'approved', '2026-04-16 10:55:32', '2026-04-16 11:00:01'),
+(9, NULL, NULL, 4, NULL, NULL, NULL, 84.55, 'Japan', 'cash_on_store', 2, 'TongTong Fish', '/uploads/invoices/INV-9-1776336988724.pdf', 'completed', 'none', '2026-04-16 10:56:28', '2026-04-17 04:23:15'),
+(10, NULL, NULL, 4, NULL, NULL, NULL, 152.00, 'Japan', 'cash_on_store', NULL, NULL, NULL, 'cancelled', 'approved', '2026-04-16 11:13:59', '2026-04-16 11:14:41'),
+(11, NULL, NULL, 4, NULL, NULL, NULL, 310.00, 'Japan', 'cash_on_store', 2, 'TongTong Fish', '/uploads/invoices/INV-11-1776398836096.pdf', 'completed', 'none', '2026-04-17 04:07:16', '2026-04-21 03:21:33'),
+(12, NULL, NULL, 4, NULL, NULL, NULL, 20150.00, 'Japan', 'cash_on_store', 2, 'TongTong Fish', NULL, 'completed', 'none', '2026-04-18 01:30:20', '2026-04-21 03:21:21'),
+(13, NULL, NULL, 4, NULL, NULL, NULL, 142.50, 'Japan', 'cash_on_store', NULL, NULL, NULL, 'completed', 'none', '2026-04-21 03:25:22', '2026-04-27 06:58:12'),
+(14, NULL, NULL, 4, NULL, NULL, NULL, 190.00, 'Japan', 'cash_on_store', NULL, NULL, NULL, 'cancelled', 'none', '2026-04-27 07:11:33', '2026-05-01 01:21:37'),
+(15, NULL, NULL, 4, NULL, NULL, NULL, 280.25, 'Japan', 'cash_on_store', 2, 'TongTong Fish', NULL, 'completed', 'none', '2026-05-01 01:43:38', '2026-05-08 00:52:56'),
+(16, 1, '2026-05-09', 4, NULL, NULL, NULL, 674.50, 'Japan', 'cash_on_store', NULL, NULL, '/uploads/invoices/INV-20260509-001.pdf', 'cancelled', 'approved', '2026-05-09 09:44:28', '2026-05-09 09:46:32');
 
 -- --------------------------------------------------------
 
@@ -261,7 +281,8 @@ INSERT INTO `order_cancellation_requests` (`request_id`, `order_id`, `user_id`, 
 (2, 5, 4, 'Customer requested cancellation', 'approved', 3, '2026-04-16 10:22:00', '2026-04-16 10:20:19'),
 (3, 6, 4, 'Customer requested cancellation', 'approved', 3, '2026-04-16 10:29:34', '2026-04-16 10:29:16'),
 (4, 8, 4, 'Customer requested cancellation', 'approved', 2, '2026-04-16 11:00:01', '2026-04-16 10:56:41'),
-(5, 10, 4, 'Customer requested cancellation', 'approved', 2, '2026-04-16 11:14:41', '2026-04-16 11:14:07');
+(5, 10, 4, 'Customer requested cancellation', 'approved', 2, '2026-04-16 11:14:41', '2026-04-16 11:14:07'),
+(6, 16, 4, 'Customer requested cancellation', 'approved', 2, '2026-05-09 09:46:32', '2026-05-09 09:45:39');
 
 -- --------------------------------------------------------
 
@@ -302,7 +323,13 @@ INSERT INTO `order_items` (`order_item_id`, `order_id`, `product_id`, `quantity`
 (15, 11, 8, 1, 160.00, 0.00, '2026-04-17 04:07:16'),
 (16, 12, 1, 1, 150.00, 0.00, '2026-04-18 01:30:20'),
 (17, 12, 9, 1, 20000.00, 0.00, '2026-04-18 01:30:20'),
-(18, 13, 1, 1, 150.00, 7.50, '2026-04-21 03:25:22');
+(18, 13, 1, 1, 150.00, 7.50, '2026-04-21 03:25:22'),
+(20, 14, 6, 1, 200.00, 10.00, '2026-04-27 07:11:33'),
+(21, 15, 2, 1, 95.00, 4.75, '2026-05-01 01:43:38'),
+(22, 15, 6, 1, 200.00, 10.00, '2026-05-01 01:43:38'),
+(23, 16, 2, 2, 95.00, 4.75, '2026-05-09 09:44:28'),
+(24, 16, 6, 1, 200.00, 10.00, '2026-05-09 09:44:28'),
+(25, 16, 8, 2, 160.00, 8.00, '2026-05-09 09:44:28');
 
 -- --------------------------------------------------------
 
@@ -329,15 +356,15 @@ CREATE TABLE `products` (
 --
 
 INSERT INTO `products` (`product_id`, `name`, `description`, `category`, `price`, `stock`, `low_stock_threshold`, `image_url`, `is_deleted`, `created_at`, `updated_at`) VALUES
-(1, 'Clown Fish', 'Clownfish (Amphiprioninae) are small, brightly colored saltwater fish best known for their orange bodies with white stripes (like in Finding Nemo). They naturally live in warm ocean reefs and often form a symbiotic relationship with sea anemones, which provide them protection.\n\nHow to Take Care of Clownfish:\n1. Tank Setup\nMinimum tank size: 20 gallons (for a pair)\nUse a saltwater aquarium (not freshwater)\nMaintain temperature: 24–27°C\npH level: 8.0–8.4\nAdd hiding spots like rocks or coral decorations\nOptional: sea anemone (only for experienced setups)\n\n2. Water Quality\nUse a marine filter and protein skimmer if possible\nRegular water changes (10–20% every 2 weeks)\nKeep ammonia and nitrites at 0 ppm\n\n3. Feeding\nFeed 1–2 times daily\nDiet includes:\nMarine flakes or pellets\nFrozen foods (brine shrimp, mysis shrimp)\n\n4. Behavior & Compatibility\nGenerally peaceful but can be territorial\nBest kept in pairs or alone\nCompatible with other calm saltwater fish\n\n5. Lighting\nModerate lighting is enough\nStrong lighting needed only if keeping corals/anemones\n\n6. Maintenance Tips\nMonitor salinity (1.020–1.025 specific gravity)\nAvoid sudden changes in water conditions\nObserve for signs of stress or disease (loss of color, erratic swimming)', 'Salt Water Fish', 150.00, 20, NULL, 'http://localhost:5000/uploads/1775273211559-410317425.jpg', 0, '2026-04-04 03:26:53', '2026-04-21 03:25:22'),
-(2, 'Gold Fish', 'Goldfish (Carassius auratus) are popular freshwater fish known for their bright orange color (though they can also be white, black, or mixed). They’re hardy and great for beginners, but they need more space and care than most people expect.\n\nHow to Take Care of Goldfish:\n1. Tank Setup\nMinimum tank size: 20 gallons for one goldfish (they grow big!)\nAdd 10 gallons for each additional fish\nUse a filter (goldfish produce a lot of waste)\nInclude gravel, plants, or decorations for enrichment\nAvoid small bowls ❌ (they cause poor health)\n\n2. Water Conditions\nTemperature: 18–24°C (they prefer cooler water)\npH level: 6.5–7.5\nNo heater usually needed (room temp is fine)\nKeep ammonia and nitrites at 0 ppm\n\n3. Feeding\nFeed 1–2 times daily (small amounts)\nDiet includes:\nGoldfish flakes or pellets\nVegetables (peas, lettuce, spinach)\nOccasional treats (bloodworms, brine shrimp)\n\n4. Behavior & Compatibility\nPeaceful and social\nBest kept with other goldfish\nAvoid aggressive or tropical fish (different needs)\n\n5. Cleaning & Maintenance\nWeekly water change (20–30%)\nClean filter regularly (but don’t remove all good bacteria)\nRemove uneaten food to prevent dirty water\n\n6. Important Tips\nGoldfish grow large (up to 6–12 inches depending on type)\nThey can live 10–15 years with proper care\nOverfeeding is a common mistake—feed lightly', 'Fresh Water Fish', 95.00, 23, NULL, 'http://localhost:5000/uploads/1775279841085-917402665.jpg', 0, '2026-04-04 05:17:26', '2026-04-16 08:17:14'),
+(1, 'Clown Fish', 'Clownfish (Amphiprioninae) are small, brightly colored saltwater fish best known for their orange bodies with white stripes (like in Finding Nemo). They naturally live in warm ocean reefs and often form a symbiotic relationship with sea anemones, which provide them protection.\n\nHow to Take Care of Clownfish:\n1. Tank Setup\nMinimum tank size: 20 gallons (for a pair)\nUse a saltwater aquarium (not freshwater)\nMaintain temperature: 24–27°C\npH level: 8.0–8.4\nAdd hiding spots like rocks or coral decorations\nOptional: sea anemone (only for experienced setups)\n\n2. Water Quality\nUse a marine filter and protein skimmer if possible\nRegular water changes (10–20% every 2 weeks)\nKeep ammonia and nitrites at 0 ppm\n\n3. Feeding\nFeed 1–2 times daily\nDiet includes:\nMarine flakes or pellets\nFrozen foods (brine shrimp, mysis shrimp)\n\n4. Behavior & Compatibility\nGenerally peaceful but can be territorial\nBest kept in pairs or alone\nCompatible with other calm saltwater fish\n\n5. Lighting\nModerate lighting is enough\nStrong lighting needed only if keeping corals/anemones\n\n6. Maintenance Tips\nMonitor salinity (1.020–1.025 specific gravity)\nAvoid sudden changes in water conditions\nObserve for signs of stress or disease (loss of color, erratic swimming)', 'Salt Water Fish', 150.00, 22, NULL, 'http://localhost:5000/uploads/1775273211559-410317425.jpg', 0, '2026-04-04 03:26:53', '2026-05-09 09:34:21'),
+(2, 'Gold Fish', 'Goldfish (Carassius auratus) are popular freshwater fish known for their bright orange color (though they can also be white, black, or mixed). They’re hardy and great for beginners, but they need more space and care than most people expect.\n\nHow to Take Care of Goldfish:\n1. Tank Setup\nMinimum tank size: 20 gallons for one goldfish (they grow big!)\nAdd 10 gallons for each additional fish\nUse a filter (goldfish produce a lot of waste)\nInclude gravel, plants, or decorations for enrichment\nAvoid small bowls ❌ (they cause poor health)\n\n2. Water Conditions\nTemperature: 18–24°C (they prefer cooler water)\npH level: 6.5–7.5\nNo heater usually needed (room temp is fine)\nKeep ammonia and nitrites at 0 ppm\n\n3. Feeding\nFeed 1–2 times daily (small amounts)\nDiet includes:\nGoldfish flakes or pellets\nVegetables (peas, lettuce, spinach)\nOccasional treats (bloodworms, brine shrimp)\n\n4. Behavior & Compatibility\nPeaceful and social\nBest kept with other goldfish\nAvoid aggressive or tropical fish (different needs)\n\n5. Cleaning & Maintenance\nWeekly water change (20–30%)\nClean filter regularly (but don’t remove all good bacteria)\nRemove uneaten food to prevent dirty water\n\n6. Important Tips\nGoldfish grow large (up to 6–12 inches depending on type)\nThey can live 10–15 years with proper care\nOverfeeding is a common mistake—feed lightly', 'Fresh Water Fish', 95.00, 22, NULL, 'http://localhost:5000/uploads/1775279841085-917402665.jpg', 0, '2026-04-04 05:17:26', '2026-05-09 09:46:32'),
 (3, 'Janitor Fish', 'Janitor Fish (Pleco / Hypostomus plecostomus) are freshwater fish known for their sucker mouths and ability to cling to surfaces. They’re often called “cleaner fish” because they eat algae, but they don’t fully clean a tank on their own.\n\nHow to Take Care of Janitor Fish:\n1. Tank Setup\nMinimum tank size: 75–100 gallons (they grow BIG)\nProvide driftwood, rocks, and hiding spots\nUse a strong filter (they produce a lot of waste)\n\n2. Water Conditions\nTemperature: 23–30°C\npH level: 6.5–7.5\nKeep water clean with regular changes (20–30% weekly)\n\n3. Feeding\nNot just algae eaters ❗\nDiet includes:\nAlgae wafers\nVegetables (zucchini, cucumber, spinach)\nOccasional protein (sinking pellets, shrimp)\n\n4. Behavior & Compatibility\nMostly peaceful but can be territorial as they grow\nBest with medium to large fish\nAvoid very small fish (may get stressed or harmed)\n\n5. Important Tips\nCan grow up to 12–24 inches depending on species 😮\nNocturnal (more active at night)\nNeed driftwood (helps digestion)\nProduce a lot of waste → don’t rely on them for cleaning', 'Fresh Water Fish', 110.00, 23, 5, 'http://localhost:5000/uploads/1775279914040-28216811.jpg', 0, '2026-04-04 05:18:39', '2026-04-16 10:12:45'),
 (4, 'TetraMin Tropical Flakes 62g', 'Flake food suitable for most fish. Easy to eat and digest, making it ideal for daily feeding.', 'Supplies', 70.00, 30, 5, 'http://localhost:5000/uploads/1775280970457-584768232.webp', 0, '2026-04-04 05:36:31', '2026-04-04 05:36:31'),
 (5, 'Ocean Nutrition Formula One Flakes 34g', 'Balanced flakes for both freshwater and saltwater fish. Provides essential nutrients for everyday feeding.', 'Supplies', 89.00, 41, 5, 'http://localhost:5000/uploads/1775281144673-136227332.png', 0, '2026-04-04 05:39:16', '2026-04-16 11:00:01'),
-(6, 'Aqueon Tropical Pellets 198g', 'Daily-use pellets for community fish. Provides balanced nutrition and supports fish health.', 'Supplies', 200.00, 25, 20, 'http://localhost:5000/uploads/1775281349151-882044713.jpg', 0, '2026-04-04 05:42:31', '2026-04-17 04:24:44'),
+(6, 'Aqueon Tropical Pellets 198g', 'Daily-use pellets for community fish. Provides balanced nutrition and supports fish health.', 'Supplies', 200.00, 26, 20, 'http://localhost:5000/uploads/1775281349151-882044713.jpg', 0, '2026-04-04 05:42:31', '2026-05-09 09:46:32'),
 (7, 'Tetra PlecoWafers 86g', 'Algae-based wafers for fish that eat at the bottom. Supports digestion and steady nutrition.', 'Supplies', 80.00, 27, NULL, 'http://localhost:5000/uploads/1775281436948-492311804.png', 0, '2026-04-04 05:44:00', '2026-04-07 16:46:42'),
-(8, 'Angel Fish', 'Angelfish (Pterophyllum) are elegant, disc-shaped freshwater fish native to the Amazon River basin. Known for their graceful, wing-like fins and distinctive triangular bodies, they are a staple in the aquarium hobby. While they belong to the cichlid family, they are much more poised than their aggressive cousins, though they still retain a dignified, \"regal\" personality.\n\nHow to Take Care of Angelfish:\n1. Tank Setup\nMinimum tank size: 30 gallons (tall tanks are better to accommodate their long fins)\nUse a freshwater aquarium\nMaintain temperature: 24–29°C\npH level: 6.5–7.5\nDecor: Include tall plants (like Amazon Swords) and driftwood to mimic their natural habitat\n\n2. Water Quality\nUse a high-quality canister or power filter with a gentle flow (strong currents can stress them)\nRegular water changes: 20–25% every week\nKeep ammonia and nitrites at 0 ppm; keep nitrates low\n\n3. Feeding\nFeed 1–2 times daily\nDiet includes:\nHigh-quality tropical flakes or pellets\nFrozen or live foods (bloodworms, brine shrimp, tubifex)\nOccasional vegetable-based flakes\n\n4. Behavior & Compatibility\nSemi-aggressive: Generally peaceful but can become territorial during spawning\nCompatibility: Best kept with other medium-sized tropical fish (Corydoras, larger Tetras, Gouramis)\nCaution: Avoid very small fish (like Neon Tetras) as Angelfish may eat them when they grow large enough\n\n5. Lighting\nModerate, natural-cycle lighting (8–10 hours a day)\nIf using live plants, ensure the light spectrum supports plant growth\n\n6. Maintenance Tips\nHeight matters: Ensure the tank is tall enough so their fins don\'t drag or get cramped\nStability: Angelfish are sensitive to shifts in water chemistry; drip-acclimate when introducing them\nHealth Watch: Check for \"hole-in-the-head\" disease or fin rot, often caused by poor water quality', 'Fresh Water Fish', 160.00, 15, 5, 'http://localhost:5000/uploads/1775281718650-363831253.jpg', 0, '2026-04-04 05:49:54', '2026-04-18 01:41:29'),
-(9, 'patingtang', 'burikat', 'Salt Water Fish', 20000.00, 49, 5, 'http://localhost:5000/uploads/1776475725690-42081923.jpg', 1, '2026-04-18 01:28:51', '2026-04-18 01:33:00');
+(8, 'Angel Fish', 'Angelfish (Pterophyllum) are elegant, disc-shaped freshwater fish native to the Amazon River basin. Known for their graceful, wing-like fins and distinctive triangular bodies, they are a staple in the aquarium hobby. While they belong to the cichlid family, they are much more poised than their aggressive cousins, though they still retain a dignified, \"regal\" personality.\n\nHow to Take Care of Angelfish:\n1. Tank Setup\nMinimum tank size: 30 gallons (tall tanks are better to accommodate their long fins)\nUse a freshwater aquarium\nMaintain temperature: 24–29°C\npH level: 6.5–7.5\nDecor: Include tall plants (like Amazon Swords) and driftwood to mimic their natural habitat\n\n2. Water Quality\nUse a high-quality canister or power filter with a gentle flow (strong currents can stress them)\nRegular water changes: 20–25% every week\nKeep ammonia and nitrites at 0 ppm; keep nitrates low\n\n3. Feeding\nFeed 1–2 times daily\nDiet includes:\nHigh-quality tropical flakes or pellets\nFrozen or live foods (bloodworms, brine shrimp, tubifex)\nOccasional vegetable-based flakes\n\n4. Behavior & Compatibility\nSemi-aggressive: Generally peaceful but can become territorial during spawning\nCompatibility: Best kept with other medium-sized tropical fish (Corydoras, larger Tetras, Gouramis)\nCaution: Avoid very small fish (like Neon Tetras) as Angelfish may eat them when they grow large enough\n\n5. Lighting\nModerate, natural-cycle lighting (8–10 hours a day)\nIf using live plants, ensure the light spectrum supports plant growth\n\n6. Maintenance Tips\nHeight matters: Ensure the tank is tall enough so their fins don\'t drag or get cramped\nStability: Angelfish are sensitive to shifts in water chemistry; drip-acclimate when introducing them\nHealth Watch: Check for \"hole-in-the-head\" disease or fin rot, often caused by poor water quality', 'Fresh Water Fish', 160.00, 40, 5, 'http://localhost:5000/uploads/1775281718650-363831253.jpg', 0, '2026-04-04 05:49:54', '2026-05-09 09:46:32'),
+(9, 'patingtang', 'burikat', 'Salt Water Fish', 20000.00, 49, 5, 'http://localhost:5000/uploads/1776475725690-42081923.jpg', 0, '2026-04-18 01:28:51', '2026-05-09 09:33:42');
 
 -- --------------------------------------------------------
 
@@ -680,7 +707,99 @@ INSERT INTO `user_session_logs` (`log_id`, `user_id`, `email`, `role_name`, `log
 (210, 2, 'tongtongornamental@gmail.com', 'admin', '2026-04-18 09:40:07', '2026-04-18 09:43:14', 1, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', 'feb59234ce56ba631339f29525d705a68737cf53d42bd634'),
 (211, 4, 'mharijie@gmail.com', 'customer', '2026-04-18 09:43:46', '2026-04-18 09:45:02', 1, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '73f6cb26e7c4ded9f25d0b127f81e2bba0071ef8247c12be'),
 (212, 2, 'tongtongornamental@gmail.com', 'admin', '2026-04-21 11:05:21', '2026-04-21 11:24:32', 1, '::ffff:127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:149.0) Gecko/20100101 Firefox/149.0', '211900ab35d892a5d66f6692e9b2ca590c4e331d23f06b9b'),
-(213, 4, 'mharijie@gmail.com', 'customer', '2026-04-21 11:24:42', '2026-04-21 11:31:58', 1, '::ffff:127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:149.0) Gecko/20100101 Firefox/149.0', 'fbdf56d017a749f4cc8c5c1159483c7328e8a74db8c52cc5');
+(213, 4, 'mharijie@gmail.com', 'customer', '2026-04-21 11:24:42', '2026-04-21 11:31:58', 1, '::ffff:127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:149.0) Gecko/20100101 Firefox/149.0', 'fbdf56d017a749f4cc8c5c1159483c7328e8a74db8c52cc5'),
+(214, 2, 'tongtongornamental@gmail.com', 'admin', '2026-04-27 14:33:22', '2026-04-27 14:33:27', 1, '::ffff:127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:150.0) Gecko/20100101 Firefox/150.0', '43a944b5f965777ec74387e9705f8ac706c27a265d8611b4'),
+(215, 2, 'tongtongornamental@gmail.com', 'admin', '2026-04-27 14:48:26', '2026-04-27 14:51:52', 1, '::ffff:127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:150.0) Gecko/20100101 Firefox/150.0', 'ea570a8fd031c4273d955f35081be1acb0fe29ad318f5ce8'),
+(216, 2, 'tongtongornamental@gmail.com', 'admin', '2026-04-27 14:58:03', '2026-04-27 14:58:54', 1, '::ffff:127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:150.0) Gecko/20100101 Firefox/150.0', 'b1fde94371c8d0e129af9ff06392a3dc3cb62d74da9be9f8'),
+(217, 4, 'mharijie@gmail.com', 'customer', '2026-04-27 15:10:58', '2026-04-27 15:11:57', 1, '::ffff:127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:150.0) Gecko/20100101 Firefox/150.0', '0f52221f3e9f95b771f54ff5e7b88805eea88e24bf153eef'),
+(218, 2, 'tongtongornamental@gmail.com', 'admin', '2026-04-27 15:12:12', '2026-04-27 15:12:35', 1, '::ffff:127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:150.0) Gecko/20100101 Firefox/150.0', '686ffaefbf49959dc9a092e355982e30f6ae7d053670a05d'),
+(219, 4, 'mharijie@gmail.com', 'customer', '2026-04-27 15:12:48', '2026-04-27 15:15:53', 1, '::ffff:127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:150.0) Gecko/20100101 Firefox/150.0', '72dce17f9a931df1ca724318c43bbfcf6aea284ae7c02d80'),
+(220, 2, 'tongtongornamental@gmail.com', 'admin', '2026-04-27 15:27:18', '2026-04-27 15:29:02', 1, '::ffff:127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:150.0) Gecko/20100101 Firefox/150.0', 'a3158277abac6f6c2438625de5d484800948c59f4e610f81'),
+(221, 2, 'tongtongornamental@gmail.com', 'admin', '2026-04-27 15:33:09', '2026-04-27 15:33:50', 1, '::ffff:127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:150.0) Gecko/20100101 Firefox/150.0', '0c66cb680f46319f39f7313a91e3bbb675e88c97823348d8'),
+(222, 3, 'harijiem@gmail.com', 'moderator', '2026-04-27 15:34:10', '2026-04-27 15:34:24', 1, '::ffff:127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:150.0) Gecko/20100101 Firefox/150.0', '7d45866e74827b72ebc11b3ce8dfd6dd4fc30e03a403e0fe'),
+(223, 2, 'tongtongornamental@gmail.com', 'admin', '2026-04-27 15:35:08', '2026-04-27 15:36:52', 1, '::ffff:127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:150.0) Gecko/20100101 Firefox/150.0', '57be35df61032fac095a373e62b9d7cd90ef4f18750b8291'),
+(224, 2, 'tongtongornamental@gmail.com', 'admin', '2026-04-27 15:37:06', '2026-04-27 15:38:05', 1, '::ffff:127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:150.0) Gecko/20100101 Firefox/150.0', '8448e541c1aeb190ef238c6cb3f666f288ac6d4723d62783'),
+(225, 2, 'tongtongornamental@gmail.com', 'admin', '2026-04-27 15:42:15', '2026-04-27 15:47:39', 1, '::ffff:127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:150.0) Gecko/20100101 Firefox/150.0', '2cf22746e19db4a184dc8ebda80d6a17e565184fe4ce7ce1'),
+(226, 2, 'tongtongornamental@gmail.com', 'admin', '2026-04-30 13:16:53', '2026-04-30 13:17:49', 1, '::ffff:127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:150.0) Gecko/20100101 Firefox/150.0', '34243135dbdf1f204df6aaa3dce651a9b521eb6b56eb0f3d'),
+(227, 2, 'tongtongornamental@gmail.com', 'admin', '2026-04-30 13:18:30', '2026-04-30 13:18:51', 1, '::ffff:127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:150.0) Gecko/20100101 Firefox/150.0', '5fa9240d42b2bf97b3caffb90f111545f15508a13cbc853a'),
+(228, 4, 'mharijie@gmail.com', 'customer', '2026-04-30 13:19:04', '2026-04-30 13:21:50', 1, '::ffff:127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:150.0) Gecko/20100101 Firefox/150.0', 'bbfcdfd0877dd426a72c4baaf396bce7bbfc82a07b52eb8c'),
+(229, 4, 'mharijie@gmail.com', 'customer', '2026-04-30 13:25:13', '2026-04-30 13:26:38', 1, '::ffff:127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:150.0) Gecko/20100101 Firefox/150.0', '42e81bfbed984ee910ba40f732f3f14b39d8800b543e1512'),
+(230, 4, 'mharijie@gmail.com', 'customer', '2026-04-30 13:30:25', '2026-04-30 13:32:05', 1, '::ffff:127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:150.0) Gecko/20100101 Firefox/150.0', 'a09bb2cb0b412fc2db82adf2d6424b545784ac9afd827608'),
+(231, 4, 'mharijie@gmail.com', 'customer', '2026-04-30 13:35:21', '2026-04-30 13:36:23', 1, '::ffff:127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:150.0) Gecko/20100101 Firefox/150.0', '71da42e170f109791f5e5f981d673ac868d6b2caec5a2f99'),
+(232, 4, 'mharijie@gmail.com', 'customer', '2026-04-30 13:38:42', '2026-04-30 13:40:58', 1, '::ffff:127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:150.0) Gecko/20100101 Firefox/150.0', '4bd86794911ee48499eb89a0176eb2421b5c8507c91dc577'),
+(233, 4, 'mharijie@gmail.com', 'customer', '2026-04-30 13:45:20', '2026-04-30 13:49:04', 1, '::ffff:127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:150.0) Gecko/20100101 Firefox/150.0', '92279b8e7aa01ef896f9224d7bc197e2ef1c4946852f19a6'),
+(234, 4, 'mharijie@gmail.com', 'customer', '2026-04-30 13:59:30', '2026-04-30 14:01:32', 1, '::ffff:127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:150.0) Gecko/20100101 Firefox/150.0', '04b59151996e1d81c4f7f7458a734b3e02cfaae57cba72d4'),
+(235, 4, 'mharijie@gmail.com', 'customer', '2026-04-30 14:04:15', '2026-04-30 14:08:42', 1, '::ffff:127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:150.0) Gecko/20100101 Firefox/150.0', '5de0bb7b0562cb4cf856c1c9506815df9b61984a845cba11'),
+(236, 4, 'mharijie@gmail.com', 'customer', '2026-04-30 14:11:39', '2026-04-30 14:13:47', 1, '::ffff:127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:150.0) Gecko/20100101 Firefox/150.0', '8aba8ccfdd425944a95aca3f79d56b8a4d60ce0ffa22aada'),
+(237, 4, 'mharijie@gmail.com', 'customer', '2026-04-30 14:18:29', '2026-04-30 14:20:28', 1, '::ffff:127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:150.0) Gecko/20100101 Firefox/150.0', '936fd28566d428922f4ab7fbcef2d7f1b4f107bd1d5c9818'),
+(238, 4, 'mharijie@gmail.com', 'customer', '2026-04-30 14:23:44', '2026-04-30 14:24:25', 1, '::ffff:127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:150.0) Gecko/20100101 Firefox/150.0', '8d051b4732ae6ade1ec5b2cce1bd1a7b75d55a19c9d2ed8f'),
+(239, 4, 'mharijie@gmail.com', 'customer', '2026-04-30 14:27:10', '2026-04-30 14:28:43', 1, '::ffff:127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:150.0) Gecko/20100101 Firefox/150.0', 'c9b3a13ce7bac0b3b5ae901e803523495eb2ee75108806cf'),
+(240, 4, 'mharijie@gmail.com', 'customer', '2026-04-30 14:31:24', '2026-04-30 14:32:20', 1, '::ffff:127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:150.0) Gecko/20100101 Firefox/150.0', '30d2bed3cf6f9b1d6ff44ac6e3331cad1b4421ae7729a2d1'),
+(241, 4, 'mharijie@gmail.com', 'customer', '2026-04-30 14:35:09', '2026-04-30 14:36:06', 1, '::ffff:127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:150.0) Gecko/20100101 Firefox/150.0', 'eeec8e00d9e0fd790cf4e5329bf390f1cd63bebe6aff821d'),
+(242, 4, 'mharijie@gmail.com', 'customer', '2026-04-30 14:38:25', '2026-04-30 14:39:00', 1, '::ffff:127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:150.0) Gecko/20100101 Firefox/150.0', '681c0d77df437d150bfdea0f80213d9cf5efa862bdce8d1b'),
+(243, 4, 'mharijie@gmail.com', 'customer', '2026-05-01 09:21:05', '2026-05-01 09:21:14', 1, '::ffff:127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:150.0) Gecko/20100101 Firefox/150.0', 'ad695e5a9d145f0966a51a6e575b3202e84031348c0e2ce2'),
+(244, 2, 'tongtongornamental@gmail.com', 'admin', '2026-05-01 09:21:27', '2026-05-01 09:22:53', 1, '::ffff:127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:150.0) Gecko/20100101 Firefox/150.0', '5412f4674764c2609996a46a95b95572396ee50d40fb88bf'),
+(245, 3, 'harijiem@gmail.com', 'moderator', '2026-05-01 09:23:04', '2026-05-01 09:23:12', 1, '::ffff:127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:150.0) Gecko/20100101 Firefox/150.0', '85a2a5ee74d2dd97a1472543d5a7b97cff2db79ce4c3bf00'),
+(246, 2, 'tongtongornamental@gmail.com', 'admin', '2026-05-01 09:23:27', '2026-05-01 09:25:03', 1, '::ffff:127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:150.0) Gecko/20100101 Firefox/150.0', 'e3fe14e1a89b348012df76fe5f5641bccce1bb14bdb1f7a5'),
+(247, 3, 'harijiem@gmail.com', 'moderator', '2026-05-01 09:25:14', '2026-05-01 09:25:22', 1, '::ffff:127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:150.0) Gecko/20100101 Firefox/150.0', '54e6c1cb1f3b9ff479c723e0e84ec160ec2631d644359e4e'),
+(248, 3, 'harijiem@gmail.com', 'moderator', '2026-05-01 09:30:07', '2026-05-01 09:31:13', 1, '::ffff:127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:150.0) Gecko/20100101 Firefox/150.0', 'a8c85a172398e063cffb884daf2981789fc84469c3ca15a4'),
+(249, 3, 'harijiem@gmail.com', 'moderator', '2026-05-01 09:40:15', '2026-05-01 09:43:18', 1, '::ffff:127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:150.0) Gecko/20100101 Firefox/150.0', 'df390a82170262d5a957ec85f53d1a1a9cf91a869f15c131'),
+(250, 4, 'mharijie@gmail.com', 'customer', '2026-05-01 09:43:27', '2026-05-01 09:43:47', 1, '::ffff:127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:150.0) Gecko/20100101 Firefox/150.0', 'c16fe5e5518dc4017bc8dee28d5f062826285001e4a0bdae'),
+(251, 3, 'harijiem@gmail.com', 'moderator', '2026-05-01 09:43:59', '2026-05-01 09:46:16', 1, '::ffff:127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:150.0) Gecko/20100101 Firefox/150.0', '176b35a4fc30659d40c63496baa5ba150a2c349694493314'),
+(252, 2, 'tongtongornamental@gmail.com', 'admin', '2026-05-01 09:46:40', '2026-05-01 09:47:16', 1, '::ffff:127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:150.0) Gecko/20100101 Firefox/150.0', 'd5a485dafc4db6610e1b9193b5b063e246ac80d3c3a2d141'),
+(253, 3, 'harijiem@gmail.com', 'moderator', '2026-05-01 09:51:35', '2026-05-01 09:54:14', 1, '::ffff:127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:150.0) Gecko/20100101 Firefox/150.0', 'd8eebc4840c4609aa3895ed1333a557ef7d5c360d77a472b'),
+(254, 3, 'harijiem@gmail.com', 'moderator', '2026-05-01 10:01:35', '2026-05-01 10:03:26', 1, '::ffff:127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:150.0) Gecko/20100101 Firefox/150.0', '99857c62c8989f06eae0f1f9e0984756e397be0e5891755e'),
+(255, 3, 'harijiem@gmail.com', 'moderator', '2026-05-01 10:06:07', '2026-05-01 10:08:10', 1, '::ffff:127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:150.0) Gecko/20100101 Firefox/150.0', 'c45fd645645cb6b86d19fc7f3826137d7c88c8339aab08fb'),
+(256, 3, 'harijiem@gmail.com', 'moderator', '2026-05-01 10:13:43', '2026-05-01 10:13:59', 1, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', 'e1db1ce8ccd5bad24d22a0200ea50422863b7cb5360154bf'),
+(257, 3, 'harijiem@gmail.com', 'moderator', '2026-05-01 10:14:13', '2026-05-01 10:16:44', 1, '::ffff:127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:150.0) Gecko/20100101 Firefox/150.0', '38b4aef8e98aaff7954088d123e580e734d3779798eefc1b'),
+(258, 3, 'harijiem@gmail.com', 'moderator', '2026-05-01 10:19:14', '2026-05-01 10:21:10', 1, '::ffff:127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:150.0) Gecko/20100101 Firefox/150.0', '6c522b25d40e5e7c97999cdaef730ae3140e5263110bf788'),
+(259, 3, 'harijiem@gmail.com', 'moderator', '2026-05-01 10:27:15', '2026-05-01 10:43:28', 1, '::ffff:127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:150.0) Gecko/20100101 Firefox/150.0', 'a8f1d82d34c55f51308c4d8d6cd8c1b895e4f1f4d89be4d7'),
+(260, 3, 'harijiem@gmail.com', 'moderator', '2026-05-01 10:50:31', '2026-05-01 10:53:51', 1, '::ffff:127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:150.0) Gecko/20100101 Firefox/150.0', '050bd2fe90047c146a996c54022e3145f82b09cb5265c098'),
+(261, 2, 'tongtongornamental@gmail.com', 'admin', '2026-05-01 10:54:05', '2026-05-01 10:54:37', 1, '::ffff:127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:150.0) Gecko/20100101 Firefox/150.0', 'd9ec8c0a686fcfa119c16deaf3fe549af1a186b2c6121363'),
+(262, 3, 'harijiem@gmail.com', 'moderator', '2026-05-01 10:58:28', '2026-05-01 10:59:45', 1, '::ffff:127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:150.0) Gecko/20100101 Firefox/150.0', 'dc22fb123ca12e99e936b26dd3363a4706997a69afdd813d'),
+(263, 4, 'mharijie@gmail.com', 'customer', '2026-05-01 10:59:56', '2026-05-01 11:02:06', 1, '::ffff:127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:150.0) Gecko/20100101 Firefox/150.0', '902ad7cd8deca825427fb2ebfc9e84cc1240d387d151323c'),
+(264, 4, 'mharijie@gmail.com', 'customer', '2026-05-01 11:04:46', '2026-05-01 11:10:10', 1, '::ffff:127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:150.0) Gecko/20100101 Firefox/150.0', '1d12ded2fca96dfcadfcabf01c1c159595119e8f086dbdc4'),
+(265, 4, 'mharijie@gmail.com', 'customer', '2026-05-01 11:14:53', '2026-05-01 11:18:26', 1, '::ffff:127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:150.0) Gecko/20100101 Firefox/150.0', 'b1e66382373a6cda534e668065186ff6db444b3b8c715c11'),
+(266, 4, 'mharijie@gmail.com', 'customer', '2026-05-01 11:21:12', '2026-05-01 11:23:49', 1, '::ffff:127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:150.0) Gecko/20100101 Firefox/150.0', 'bd9e455b8517748e06b9eb3416d63d7e4acf562b466462e3'),
+(267, 4, 'mharijie@gmail.com', 'customer', '2026-05-01 11:28:13', '2026-05-01 11:30:27', 1, '::ffff:127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:150.0) Gecko/20100101 Firefox/150.0', '3688c3ca99ad68b7facf26163995fb7095b6f6b6fd8bb387'),
+(268, 2, 'tongtongornamental@gmail.com', 'admin', '2026-05-01 11:30:41', '2026-05-01 11:32:47', 1, '::ffff:127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:150.0) Gecko/20100101 Firefox/150.0', 'c69d67f0601bd2ce6e67c89802048e72b504c689f64d1ae7'),
+(269, 2, 'tongtongornamental@gmail.com', 'admin', '2026-05-01 11:46:09', '2026-05-01 11:49:01', 1, '::ffff:127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:150.0) Gecko/20100101 Firefox/150.0', '31495de3655795d8f927884088fd9893ec006774e6d15577'),
+(270, 3, 'harijiem@gmail.com', 'moderator', '2026-05-08 08:30:27', '2026-05-08 08:30:51', 1, '::ffff:127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:150.0) Gecko/20100101 Firefox/150.0', 'ffa608eec664da8e456b245bbf67ae1c4ed32c0853ebf49b'),
+(271, 4, 'mharijie@gmail.com', 'customer', '2026-05-08 08:31:04', '2026-05-08 08:35:48', 1, '::ffff:127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:150.0) Gecko/20100101 Firefox/150.0', '88a6b7276f17f5383dcac8a38cdf28b575657b09cc926167'),
+(272, 2, 'tongtongornamental@gmail.com', 'admin', '2026-05-08 08:36:02', '2026-05-08 08:36:19', 1, '::ffff:127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:150.0) Gecko/20100101 Firefox/150.0', '882fa20420b1468d56c7c40962fd46b59fbe8add0e66e394'),
+(273, 3, 'harijiem@gmail.com', 'moderator', '2026-05-08 08:36:35', '2026-05-08 08:36:43', 1, '::ffff:127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:150.0) Gecko/20100101 Firefox/150.0', 'a0f7c3025eba6fc8a16febbf3e17072cf292d9d7ff3ac3a4'),
+(274, 4, 'mharijie@gmail.com', 'customer', '2026-05-08 08:36:53', '2026-05-08 08:37:05', 1, '::ffff:127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:150.0) Gecko/20100101 Firefox/150.0', 'e186645f6c12bbda7cfe15345be212b166cb10e170c79bc2'),
+(275, 2, 'tongtongornamental@gmail.com', 'admin', '2026-05-08 08:51:06', '2026-05-08 08:53:44', 1, '::ffff:127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:150.0) Gecko/20100101 Firefox/150.0', 'df3e0727b4ea68f62fa9764e703b407694e3dd526aea8f53'),
+(276, 3, 'harijiem@gmail.com', 'moderator', '2026-05-08 08:53:55', '2026-05-08 08:54:04', 1, '::ffff:127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:150.0) Gecko/20100101 Firefox/150.0', '45a007e3bab3e5aec30b977fdbdde757dca883ea5c78d5ab'),
+(277, 4, 'mharijie@gmail.com', 'customer', '2026-05-08 08:54:21', '2026-05-08 08:54:58', 1, '::ffff:127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:150.0) Gecko/20100101 Firefox/150.0', '939cba4a6ca9f9225cfa5533339dcd7f1739bcf4f56817bf'),
+(278, 4, 'mharijie@gmail.com', 'customer', '2026-05-08 08:55:25', NULL, 1, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '8c629a38bb8fa05c942c8c4344f4d28ceb02745115cb6de3'),
+(279, 4, 'mharijie@gmail.com', 'customer', '2026-05-08 09:11:10', '2026-05-08 09:12:19', 1, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', 'e411bb217b3385e26258cb3e0f75023ec3a4fccd23677dde'),
+(280, 4, 'mharijie@gmail.com', 'customer', '2026-05-08 09:12:29', '2026-05-08 09:14:23', 1, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', 'f514e20e2a91f8a5f55dda147ec76c92083d4ad0dcabdf17'),
+(281, 4, 'mharijie@gmail.com', 'customer', '2026-05-08 09:17:06', '2026-05-08 09:22:11', 1, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '4e58cb6e25fd0d20092e66c004d2b47a348913ae0642e2e3'),
+(282, 4, 'mharijie@gmail.com', 'customer', '2026-05-09 16:54:51', '2026-05-09 16:55:01', 1, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', 'ceb711836731b599c3588090d5bb0b6dd4d58993df84f4be'),
+(283, 2, 'tongtongornamental@gmail.com', 'admin', '2026-05-09 16:56:24', '2026-05-09 16:57:27', 1, '::ffff:127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:150.0) Gecko/20100101 Firefox/150.0', '743e25a44de54f4f610baabb9861e39285b08836ae01700b'),
+(284, 4, 'mharijie@gmail.com', 'customer', '2026-05-09 16:57:43', '2026-05-09 17:00:40', 1, '::ffff:127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:150.0) Gecko/20100101 Firefox/150.0', '90ae2c88b656c0ad2515dc4f1e42173d601728d7feae51e4'),
+(285, 4, 'mharijie@gmail.com', 'customer', '2026-05-09 17:07:50', '2026-05-09 17:08:30', 1, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', '36bd6a5de1f365f7531f7b35c6609bd4ddc207691e19a540'),
+(286, 2, 'tongtongornamental@gmail.com', 'admin', '2026-05-09 17:09:01', '2026-05-09 17:09:19', 1, '::ffff:127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:150.0) Gecko/20100101 Firefox/150.0', '67bbf80322e3fc3453ca3252fd86bc914e7db9ff24783be3'),
+(287, 4, 'mharijie@gmail.com', 'customer', '2026-05-09 17:09:28', '2026-05-09 17:14:17', 1, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', 'f0fb1daa91bc7ae036ca6221736fc0e6af4015b3cc04f5bf'),
+(288, 4, 'mharijie@gmail.com', 'customer', '2026-05-09 17:17:39', '2026-05-09 17:17:52', 1, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', 'd51f94267673d2df003e1284b49a0a0e06cfea55eccc747e'),
+(289, 2, 'tongtongornamental@gmail.com', 'admin', '2026-05-09 17:32:15', '2026-05-09 17:36:17', 1, '::ffff:127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:150.0) Gecko/20100101 Firefox/150.0', 'f1651f701e8246f07d276895eb02a83500c48b51ebc6d417'),
+(290, 3, 'harijiem@gmail.com', 'moderator', '2026-05-09 17:36:32', '2026-05-09 17:40:39', 1, '::ffff:127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:150.0) Gecko/20100101 Firefox/150.0', 'b4c6343133578300f77d48e4b99ed5d0418811f95799f485'),
+(291, 4, 'mharijie@gmail.com', 'customer', '2026-05-09 17:40:43', '2026-05-09 17:47:53', 1, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36 Edg/147.0.0.0', 'cb1aa581d4906c2fe353b72f8ea8635cc2a6e63bfac833cf'),
+(292, 2, 'tongtongornamental@gmail.com', 'admin', '2026-05-09 17:45:59', '2026-05-09 17:46:49', 1, '::ffff:127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:150.0) Gecko/20100101 Firefox/150.0', '2862cf4a3eccdf7102b9e5bcbfb1c5808f505e3398625d0c'),
+(293, 2, 'tongtongornamental@gmail.com', 'admin', '2026-05-09 17:50:03', '2026-05-09 17:50:42', 1, '::ffff:127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:150.0) Gecko/20100101 Firefox/150.0', '88e68abe60e5a7a9c53f51d6f78127152b3254a288be5aa4'),
+(294, 4, 'mharijie@gmail.com', 'customer', '2026-05-09 17:50:54', '2026-05-09 17:51:22', 1, '::ffff:127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:150.0) Gecko/20100101 Firefox/150.0', '807b39e3f489b1fcd9b2384fb6f5550ab43840868818507c'),
+(295, 2, 'tongtongornamental@gmail.com', 'admin', '2026-05-09 17:51:34', '2026-05-09 17:51:48', 1, '::ffff:127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:150.0) Gecko/20100101 Firefox/150.0', 'f8b35cea43f74cbfaf7292889b9dc7e359e13b40080eaa22'),
+(296, 4, 'mharijie@gmail.com', 'customer', '2026-05-09 17:52:00', '2026-05-09 17:52:10', 1, '::ffff:127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:150.0) Gecko/20100101 Firefox/150.0', 'f0fe0cfb853a49c8fc410601d4553e03d94d21f7e07e8d5e'),
+(297, 2, 'tongtongornamental@gmail.com', 'admin', '2026-05-09 17:52:23', '2026-05-09 17:52:35', 1, '::ffff:127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:150.0) Gecko/20100101 Firefox/150.0', '148960876ba10d24f9fc19548e0784fe1f4dbf62091b413e'),
+(298, 4, 'mharijie@gmail.com', 'customer', '2026-05-09 17:52:47', '2026-05-09 18:00:04', 1, '::ffff:127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:150.0) Gecko/20100101 Firefox/150.0', '799c145f2b195f753ac33b73eae712a11bb7fdd4f3a7a0fe'),
+(299, 2, 'tongtongornamental@gmail.com', 'admin', '2026-05-15 22:06:50', '2026-05-15 22:06:57', 1, '::ffff:127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:150.0) Gecko/20100101 Firefox/150.0', '7668a674201b134a51e8fcedf7565ce3c8ea43a146aa353f'),
+(300, 2, 'tongtongornamental@gmail.com', 'admin', '2026-05-15 22:19:37', '2026-05-15 22:20:20', 1, '::ffff:127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:150.0) Gecko/20100101 Firefox/150.0', '3953e93a16ed64c2f96b7185e266bf36599a103d680b56c7'),
+(301, 4, 'mharijie@gmail.com', 'customer', '2026-05-15 22:20:34', '2026-05-15 22:21:04', 1, '::ffff:127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:150.0) Gecko/20100101 Firefox/150.0', '72d4c8cf9e1acb138d9b6123ca790f50280bdc8504086900'),
+(302, 4, 'mharijie@gmail.com', 'customer', '2026-05-15 22:25:27', '2026-05-15 22:26:49', 1, '::ffff:127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:150.0) Gecko/20100101 Firefox/150.0', '5b1014e65faadf7846c7084eee6d5f2465b12c137f4e9da9'),
+(303, 2, 'tongtongornamental@gmail.com', 'admin', '2026-05-15 23:26:26', '2026-05-15 23:30:13', 1, '::ffff:127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:150.0) Gecko/20100101 Firefox/150.0', '0d83eacab37e1526d7b9bb27040d227c042faec82711ad76'),
+(304, 4, 'mharijie@gmail.com', 'customer', '2026-05-15 23:32:05', '2026-05-15 23:36:39', 1, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36 Edg/148.0.0.0', 'be9e3284c90391e8a0c1ed9fbbf75f99d5dd7ec6386fb9eb'),
+(305, 3, 'harijiem@gmail.com', 'moderator', '2026-05-15 23:32:25', '2026-05-15 23:34:39', 1, '::ffff:127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:150.0) Gecko/20100101 Firefox/150.0', 'f94bf0d58108a230fb94ca5a6d9392155175254d820c4db0');
 
 --
 -- Indexes for dumped tables
@@ -812,13 +931,13 @@ ALTER TABLE `user_session_logs`
 -- AUTO_INCREMENT for table `cart`
 --
 ALTER TABLE `cart`
-  MODIFY `cart_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
+  MODIFY `cart_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=28;
 
 --
 -- AUTO_INCREMENT for table `cash_register_entries`
 --
 ALTER TABLE `cash_register_entries`
-  MODIFY `entry_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+  MODIFY `entry_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- AUTO_INCREMENT for table `cash_register_reconciliations`
@@ -830,31 +949,31 @@ ALTER TABLE `cash_register_reconciliations`
 -- AUTO_INCREMENT for table `invoices`
 --
 ALTER TABLE `invoices`
-  MODIFY `invoice_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
+  MODIFY `invoice_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
 
 --
 -- AUTO_INCREMENT for table `invoice_requests`
 --
 ALTER TABLE `invoice_requests`
-  MODIFY `request_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
+  MODIFY `request_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=29;
 
 --
 -- AUTO_INCREMENT for table `orders`
 --
 ALTER TABLE `orders`
-  MODIFY `order_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
+  MODIFY `order_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
 
 --
 -- AUTO_INCREMENT for table `order_cancellation_requests`
 --
 ALTER TABLE `order_cancellation_requests`
-  MODIFY `request_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `request_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT for table `order_items`
 --
 ALTER TABLE `order_items`
-  MODIFY `order_item_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
+  MODIFY `order_item_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=26;
 
 --
 -- AUTO_INCREMENT for table `products`
@@ -890,7 +1009,7 @@ ALTER TABLE `user_accounts`
 -- AUTO_INCREMENT for table `user_session_logs`
 --
 ALTER TABLE `user_session_logs`
-  MODIFY `log_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=214;
+  MODIFY `log_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=306;
 
 --
 -- Constraints for dumped tables
