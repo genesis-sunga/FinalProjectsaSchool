@@ -51,6 +51,15 @@ if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
 }
 
+function resolveFrontendDistPath() {
+    const possibleDistPaths = [
+        path.join(__dirname, 'public'),
+        path.join(__dirname, '..', 'frontend', 'dist')
+    ];
+
+    return possibleDistPaths.find((distPath) => fs.existsSync(path.join(distPath, 'index.html')));
+}
+
 const invoiceUploadDir = path.join(uploadDir, 'invoices');
 if (!fs.existsSync(invoiceUploadDir)) {
     fs.mkdirSync(invoiceUploadDir, { recursive: true });
@@ -4303,6 +4312,20 @@ app.get('/api/categories', (req, res) => {
         res.json(categories);
     });
 });
+
+const frontendDistPath = resolveFrontendDistPath();
+if (frontendDistPath) {
+    app.use(express.static(frontendDistPath));
+    app.use((req, res, next) => {
+        if (req.method !== 'GET' || req.path.startsWith('/api') || req.path.startsWith('/uploads')) {
+            return next();
+        }
+
+        return res.sendFile(path.join(frontendDistPath, 'index.html'));
+    });
+} else {
+    console.warn('Frontend build not found. Run "npm run build" in the frontend folder before deploying the full app.');
+}
 
 startLowStockDigestScheduler();
 

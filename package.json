@@ -1,4 +1,9 @@
 {
+  "scripts": {
+    "build": "npm run build --prefix frontend",
+    "start": "npm start --prefix backend",
+    "install:all": "npm install --prefix backend && npm install --prefix frontend"
+  },
   "dependencies": {
     "bcrypt": "^6.0.0",
     "bcryptjs": "^3.0.3",
