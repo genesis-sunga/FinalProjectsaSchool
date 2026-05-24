@@ -1,5 +1,5 @@
 // --- ACCOUNT MANAGEMENT & LOW STOCK ROUTES MOVED BELOW APP INITIALIZATION ---
-require('dotenv').config();
+require('dotenv').config({ path: require('node:path').join(__dirname, '.env') });
 const express = require('express');
 const mysql = require('mysql');
 const cors = require('cors');
@@ -157,18 +157,48 @@ const upload = multer({
 });
 
 // --- 1. DATABASE CONNECTION ---
-const db = mysql.createConnection({
-    host: process.env.DB_HOST || "localhost",
-    user: process.env.DB_USER || "root",
-    password: process.env.DB_PASSWORD || "",
-    database: process.env.DB_NAME || "db_project",
-    port: Number(process.env.DB_PORT || 3306),
-    charset: 'utf8mb4' 
-});
+function getRequiredEnv(name, fallback = '') {
+    const value = process.env[name] || fallback;
+    if (process.env.NODE_ENV === 'production' && !value) {
+        throw new Error(`${name} is required in production.`);
+    }
+    return value;
+}
 
-db.connect(err => {
-    if (err) throw err;
-    console.log("Connected to MySQL Database.");
+function buildDatabaseConfig() {
+    const useSsl = String(process.env.DB_SSL || '').toLowerCase() === 'true';
+
+    return {
+        host: getRequiredEnv('DB_HOST', 'localhost'),
+        user: getRequiredEnv('DB_USER', 'root'),
+        password: getRequiredEnv('DB_PASSWORD', ''),
+        database: getRequiredEnv('DB_NAME', 'db_project'),
+        port: Number(process.env.DB_PORT || 3306),
+        charset: 'utf8mb4',
+        connectionLimit: Number(process.env.DB_CONNECTION_LIMIT || 10),
+        connectTimeout: Number(process.env.DB_CONNECT_TIMEOUT || 20000),
+        acquireTimeout: Number(process.env.DB_ACQUIRE_TIMEOUT || 20000),
+        ssl: useSsl
+            ? { rejectUnauthorized: String(process.env.DB_SSL_REJECT_UNAUTHORIZED || 'true').toLowerCase() !== 'false' }
+            : undefined
+    };
+}
+
+const dbConfig = buildDatabaseConfig();
+const db = mysql.createPool(dbConfig);
+
+db.getConnection((err, connection) => {
+    if (err) {
+        console.error('Unable to connect to MySQL Database.');
+        console.error(`Host: ${dbConfig.host}:${dbConfig.port}`);
+        console.error(`Database: ${dbConfig.database}`);
+        console.error(`MySQL error: ${err.code || err.message}`);
+        console.error('For Hostinger, confirm DB_HOST is the MySQL hostname from hPanel and that remote MySQL access allows this server IP.');
+        throw err;
+    }
+
+    connection.release();
+    console.log(`Connected to MySQL Database at ${dbConfig.host}:${dbConfig.port}.`);
 
     // Legacy cleanup: processing is now treated as pending in order flows.
     db.query("UPDATE orders SET status = 'pending' WHERE status = 'processing'", (statusFixErr) => {
