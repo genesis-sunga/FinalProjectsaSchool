@@ -54,7 +54,9 @@ if (!fs.existsSync(uploadDir)) {
 function resolveFrontendDistPath() {
     const possibleDistPaths = [
         path.join(__dirname, 'public'),
-        path.join(__dirname, '..', 'frontend', 'dist')
+        path.join(__dirname, '..', 'frontend', 'dist'),
+        path.join(__dirname, '..', 'dist'),
+        path.join(__dirname, '..', 'build')
     ];
 
     return possibleDistPaths.find((distPath) => fs.existsSync(path.join(distPath, 'index.html')));
@@ -194,7 +196,7 @@ db.getConnection((err, connection) => {
         console.error(`Database: ${dbConfig.database}`);
         console.error(`MySQL error: ${err.code || err.message}`);
         console.error('For Hostinger, confirm DB_HOST is the MySQL hostname from hPanel and that remote MySQL access allows this server IP.');
-        throw err;
+        return;
     }
 
     connection.release();
