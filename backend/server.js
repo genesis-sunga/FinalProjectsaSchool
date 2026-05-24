@@ -211,18 +211,43 @@ const upload = multer({
 });
 
 // --- 1. DATABASE CONNECTION ---
-const db = mysql.createConnection({
-    host: process.env.DB_HOST || "localhost",
-    user: process.env.DB_USER || "root",
-    password: process.env.DB_PASSWORD || "",
-    database: process.env.DB_NAME || "db_project",
-    port: Number(process.env.DB_PORT || 3306),
-    charset: 'utf8mb4' 
-});
+let db;
 
-db.connect(err => {
-    if (err) throw err;
-    console.log("Connected to MySQL Database.");
+function createDbConnection() {
+    return mysql.createConnection({
+        host: process.env.DB_HOST || "localhost",
+        user: process.env.DB_USER || "root",
+        password: process.env.DB_PASSWORD || "",
+        database: process.env.DB_NAME || "db_project",
+        port: Number(process.env.DB_PORT || 3306),
+        charset: 'utf8mb4'
+    });
+}
+
+function connectDatabase() {
+    db = createDbConnection();
+
+    db.connect(err => {
+        if (err) {
+            console.error("MySQL connection error:", err.message);
+            setTimeout(connectDatabase, 5000);
+            return;
+        }
+
+        console.log("Connected to MySQL Database.");
+        runStartupDatabaseTasks();
+    });
+
+    db.on('error', (err) => {
+        console.error("MySQL connection lost:", err.message);
+        if (err.fatal || err.code === 'PROTOCOL_CONNECTION_LOST' || err.code === 'ECONNRESET') {
+            setTimeout(connectDatabase, 5000);
+            return;
+        }
+    });
+}
+
+function runStartupDatabaseTasks() {
 
     // Legacy cleanup: processing is now treated as pending in order flows.
     db.query("UPDATE orders SET status = 'pending' WHERE status = 'processing'", (statusFixErr) => {
@@ -250,7 +275,9 @@ db.connect(err => {
             }
         });
     });
-});
+}
+
+connectDatabase();
 
 // --- 2. ROLE CHECK MIDDLEWARE ---
 const checkRole = (requiredRole) => {
@@ -360,10 +387,19 @@ function sendOtpEmail(to, subject, otpCode, options = {}, callback = () => {}) {
 
     transporter.sendMail({
         from: mailFrom,
+        envelope: {
+            from: mailUser,
+            to
+        },
+        replyTo: publicContactEmail,
         to,
         subject,
         ...otpMail
-    }, callback);
+    }, (mailErr, info) => {
+        if (mailErr) return callback(mailErr);
+        console.log(`OTP email sent to ${to}: accepted=${(info.accepted || []).join(',') || '-'} rejected=${(info.rejected || []).join(',') || '-'} response=${info.response || '-'}`);
+        callback(null, info);
+    });
 }
 
 // Change time kapag mag testing sa school, hihihihi
@@ -712,7 +748,11 @@ app.post('/api/resend-otp', (req, res) => {
 
     db.query("UPDATE user_accounts SET otp = ?, otp_expires_at = ? WHERE email = ? AND is_deleted = 0", 
     [otpCode, expiresAt, normalizedEmail], (err, result) => {
-        if (err || result.affectedRows === 0) return res.status(404).json({ message: "Account not found" });
+        if (err) {
+            console.error('Resend OTP database error:', err.message || err);
+            return res.status(500).json({ message: "Database error" });
+        }
+        if (result.affectedRows === 0) return res.status(404).json({ message: "Account not found" });
 
         sendOtpEmail(
             normalizedEmail,
@@ -854,7 +894,11 @@ app.post('/api/send-otp', (req, res) => {
     // Temporarily set is_verified to 0 during the reset process for security
     db.query("UPDATE user_accounts SET otp = ?, otp_expires_at = ?, is_verified = 0 WHERE email = ? AND is_deleted = 0", 
     [otpCode, expiresAt, normalizedEmail], (err, result) => {
-        if (err || result.affectedRows === 0) return res.status(404).json({ message: "Email not found" });
+        if (err) {
+            console.error('Forgot password OTP database error:', err.message || err);
+            return res.status(500).json({ message: "Database error" });
+        }
+        if (result.affectedRows === 0) return res.status(404).json({ message: "Email not found" });
 
         sendOtpEmail(
             normalizedEmail,
