@@ -1,11 +1,15 @@
 // --- ACCOUNT MANAGEMENT & LOW STOCK ROUTES MOVED BELOW APP INITIALIZATION ---
-require('dotenv').config({ path: require('node:path').join(__dirname, '.env') });
+const dotenv = require('dotenv');
+const path = require('path');
+
+dotenv.config({ path: path.join(__dirname, '.env') });
+dotenv.config({ path: path.join(__dirname, '..', '.env') });
+
 const express = require('express');
 const mysql = require('mysql');
 const cors = require('cors');
 const nodemailer = require('nodemailer');
 const multer = require('multer');
-const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
@@ -13,10 +17,10 @@ const PDFDocument = require('pdfkit');
 // --- ROUTES MOVED BELOW APP INITIALIZATION ---
 // JWT authentication middleware
 const jwt = require('jsonwebtoken');
-const JWT_SECRET = process.env.JWT_SECRET || (process.env.NODE_ENV === 'production' ? '' : 'dev-only-jwt-secret');
+const JWT_SECRET = process.env.JWT_SECRET || 'dev-only-jwt-secret-change-me';
 
-if (!JWT_SECRET) {
-    throw new Error('JWT_SECRET is required in production.');
+if (process.env.NODE_ENV === 'production' && (!process.env.JWT_SECRET || process.env.JWT_SECRET.includes('replace-with'))) {
+    console.warn('JWT_SECRET is missing or still using the placeholder value. Set a long random secret in Hostinger.');
 }
 
 const PORT = Number(process.env.PORT || 5000);
@@ -44,6 +48,14 @@ app.use(cors({
     credentials: true
 }));
 app.use(express.json());
+
+app.get('/health', (req, res) => {
+    res.json({
+        ok: true,
+        uptime: process.uptime(),
+        timestamp: new Date().toISOString()
+    });
+});
 
 // Create uploads directory if it doesn't exist
 const uploadDir = path.join(__dirname, 'uploads');
@@ -162,7 +174,7 @@ const upload = multer({
 function getRequiredEnv(name, fallback = '') {
     const value = process.env[name] || fallback;
     if (process.env.NODE_ENV === 'production' && !value) {
-        throw new Error(`${name} is required in production.`);
+        console.warn(`${name} is missing. The server will start, but database-backed API routes may fail.`);
     }
     return value;
 }
