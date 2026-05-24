@@ -4,6 +4,7 @@ const path = require('node:path');
 const rootDir = path.resolve(__dirname, '..');
 const sourceDir = path.join(rootDir, 'frontend', 'dist');
 const outputDirs = [
+  path.join(rootDir, 'backend', 'public'),
   path.join(rootDir, 'dist'),
   path.join(rootDir, 'build'),
 ];
@@ -17,4 +18,4 @@ for (const outputDir of outputDirs) {
   fs.cpSync(sourceDir, outputDir, { recursive: true });
 }
 
-console.log('Copied frontend/dist to root dist and build');
+console.log('Copied frontend/dist to backend/public, root dist, and root build');
