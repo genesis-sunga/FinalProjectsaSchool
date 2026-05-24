@@ -1,7 +1,16 @@
 import axios from 'axios';
 
 const LOCAL_API_ORIGIN = 'http://localhost:5000';
-const DEFAULT_API_ORIGIN = import.meta.env.PROD ? window.location.origin : LOCAL_API_ORIGIN;
+const getDefaultApiOrigin = () => {
+    if (import.meta.env.PROD) return window.location.origin;
+
+    const isLocalHost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    if (isLocalHost) return LOCAL_API_ORIGIN;
+
+    return `${window.location.protocol}//${window.location.hostname}:5000`;
+};
+
+const DEFAULT_API_ORIGIN = getDefaultApiOrigin();
 
 export const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || DEFAULT_API_ORIGIN).replace(/\/$/, '');
 

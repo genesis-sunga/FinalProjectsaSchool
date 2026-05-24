@@ -5,16 +5,32 @@ import Swal from 'sweetalert2';
 import axios from 'axios';
 import './Verification.css';
 
+const getDashboardPath = (user) => {
+    const roleName = (user?.role_name || '').toLowerCase();
+    const legacyRole = (user?.legacy_role || '').toLowerCase();
+    const workerRoleAliases = new Set(['worker', 'moderator', 'cashier']);
+
+    if (roleName === 'admin') return '/admin-dashboard';
+    if (workerRoleAliases.has(roleName) || workerRoleAliases.has(legacyRole)) return '/worker-dashboard';
+    return '/catalog';
+};
+
+const formatTimer = (seconds) => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = String(seconds % 60).padStart(2, '0');
+    return `${minutes}:${remainingSeconds}`;
+};
+
 const Verification = () => {
     const [otp, setOtp] = useState('');
-    const [timer, setTimer] = useState(60);
+    const [timer, setTimer] = useState(600);
     const [isTimedOut, setIsTimedOut] = useState(false);
     const [backgroundImageUrl, setBackgroundImageUrl] = useState('/isda_bg.png');
     const navigate = useNavigate();
     const location = useLocation();
     
-    // Retrieve email passed from Signup.jsx state
-    const email = location.state?.email || "";
+    const email = (location.state?.email || sessionStorage.getItem('pendingVerificationEmail') || "").trim().toLowerCase();
+    const otpAlreadySent = location.state?.otpAlreadySent === true;
 
     const fetchBackground = async () => {
         try {
@@ -33,6 +49,34 @@ const Verification = () => {
     }, []);
 
     useEffect(() => {
+        if (!email) {
+            Swal.fire('Verification Needed', 'Please log in or sign up before entering a verification code.', 'warning')
+                .then(() => navigate('/login'));
+            return;
+        }
+
+        sessionStorage.setItem('pendingVerificationEmail', email);
+
+        if (otpAlreadySent) return;
+
+        const resendKey = `verificationOtpSentAt:${email}`;
+        const lastSentAt = Number(sessionStorage.getItem(resendKey) || 0);
+        if (Date.now() - lastSentAt < 30000) return;
+
+        sessionStorage.setItem(resendKey, String(Date.now()));
+        axios.post('http://localhost:5000/api/resend-otp', { email })
+            .then(() => {
+                setTimer(600);
+                setIsTimedOut(false);
+                setOtp('');
+            })
+            .catch((err) => {
+                sessionStorage.removeItem(resendKey);
+                Swal.fire('Error', err.response?.data?.message || 'Could not send OTP. Please try again later.', 'error');
+            });
+    }, [email, navigate, otpAlreadySent]);
+
+    useEffect(() => {
         let interval;
         if (timer > 0) {
             interval = setInterval(() => setTimer((prev) => prev - 1), 1000);
@@ -44,34 +88,48 @@ const Verification = () => {
     }, [timer]);
 
     const handleVerify = async () => {
-        if (!otp) return Swal.fire('Error', 'Please enter the 4-digit code', 'error');
+        const normalizedOtp = otp.trim();
+        if (!email) return Swal.fire('Error', 'Missing verification email. Please log in again.', 'error');
+        if (!/^\d{4}$/.test(normalizedOtp)) return Swal.fire('Error', 'Please enter the 4-digit code', 'error');
         if (isTimedOut) return Swal.fire('Expired', 'OTP has timed out. Please resend.', 'error');
 
         try {
-            // Using your local backend port 5000
             const res = await axios.post('http://localhost:5000/api/verify-account', { 
-                email: email.trim().toLowerCase(), 
-                otp 
+                email, 
+                otp: normalizedOtp 
             });
             
             if (res.status === 200) {
+                if (res.data.user) {
+                    localStorage.setItem('user', JSON.stringify(res.data.user));
+                }
+                if (res.data.sessionLogId) {
+                    localStorage.setItem('sessionLogId', String(res.data.sessionLogId));
+                }
+                if (res.data.sessionToken) {
+                    localStorage.setItem('sessionToken', res.data.sessionToken);
+                }
+                sessionStorage.removeItem('pendingVerificationEmail');
+
                 await Swal.fire({
                     icon: 'success',
                     title: 'Account Verified!',
-                    text: 'You can now log in to your account.',
+                    text: 'Taking you to your account.',
                     confirmButtonColor: '#007bff'
                 });
-                navigate('/login');
+                navigate(getDashboardPath(res.data.user));
             }
         } catch (err) {
-            Swal.fire('Invalid Code', 'The OTP you entered is incorrect or has expired.', 'error');
+            Swal.fire('Invalid Code', err.response?.data?.message || 'The OTP you entered is incorrect or has expired.', 'error');
         }
     };
 
     const handleResend = async () => {
+        if (!email) return Swal.fire('Error', 'Missing verification email. Please log in again.', 'error');
+
         try {
             await axios.post('http://localhost:5000/api/resend-otp', { email });
-            setTimer(60);
+            setTimer(600);
             setIsTimedOut(false);
             setOtp('');
             Swal.fire('Sent!', 'A new code has been sent to your email.', 'success');
@@ -99,7 +157,7 @@ const Verification = () => {
                         <div className={`timer-badge ${isTimedOut ? 'timeout-text' : ''}`}>
                             <Clock size={16} />
                             <span>
-                                {isTimedOut ? 'Code Expired' : `Expires in ${timer}s`}
+                                {isTimedOut ? 'Code Expired' : `Expires in ${formatTimer(timer)}`}
                             </span>
                         </div>
 
@@ -110,7 +168,7 @@ const Verification = () => {
                                 placeholder="0000" 
                                 className="centered-input verify-otp-input" 
                                 value={otp} 
-                                onChange={(e) => setOtp(e.target.value)}
+                                onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 4))}
                                 maxLength={4}
                             />
                         </div>

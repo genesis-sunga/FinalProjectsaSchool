@@ -3,6 +3,7 @@
   "scripts": {
     "build": "npm install --include=optional --prefix frontend && npm run build --prefix frontend && node scripts/copy-frontend-dist.js",
     "start": "node server.js",
+    "start:public": "set HOST=0.0.0.0&& node server.js",
     "install:all": "npm install --prefix backend && npm install --include=optional --prefix frontend"
   },
   "dependencies": {

@@ -75,7 +75,10 @@ const Login = () => {
                     confirmButtonText: 'Verify Now',
                     confirmButtonColor: '#2563eb',
                 }).then((result) => {
-                    if (result.isConfirmed) navigate('/verify', { state: { email: normalizedEmail } });
+                    if (result.isConfirmed) {
+                        sessionStorage.setItem('pendingVerificationEmail', normalizedEmail);
+                        navigate('/verify', { state: { email: normalizedEmail, otpAlreadySent: false } });
+                    }
                 });
             } else {
                 Swal.fire({

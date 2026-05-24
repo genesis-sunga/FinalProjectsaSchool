@@ -272,8 +272,9 @@ const Signup = () => {
                 address: fullAddress,
                 email: normalizedEmail 
             });
+            sessionStorage.setItem('pendingVerificationEmail', normalizedEmail);
             Swal.fire('Success', 'Account created! Check your email for OTP.', 'success').then(() => {
-                navigate('/verify', { state: { email: normalizedEmail } });
+                navigate('/verify', { state: { email: normalizedEmail, otpAlreadySent: true } });
             });
         } catch (err) {
             setErrors({ form: err.response?.data?.message || 'Registration failed' });
