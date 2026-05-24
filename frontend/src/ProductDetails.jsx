@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import Swal from 'sweetalert2';
 import { ShoppingCart, ArrowLeft, Minus, Plus, X } from 'lucide-react';
+import { toAssetUrl } from './apiConfig';
 import './ProductDetails.css';
 
 const ProductDetails = () => {
@@ -129,6 +130,7 @@ const ProductDetails = () => {
     const isOutOfStock = !isDiscontinued && Number(product.stock || 0) <= 0;
     const isUnavailable = isDiscontinued || isOutOfStock;
     const availabilityLabel = isDiscontinued ? 'Discontinued' : isOutOfStock ? 'Out of stock' : `${product.stock} in stock`;
+    const productImageUrl = toAssetUrl(product.image_url);
     const descriptionSections = String(product.description || '')
         .split(/\n\s*\n/)
         .map((section) => section.trim())
@@ -186,7 +188,7 @@ const ProductDetails = () => {
                                 aria-label="Open product image preview"
                             >
                                 <img 
-                                    src={product.image_url || 'https://via.placeholder.com/500'} 
+                                    src={productImageUrl || 'https://via.placeholder.com/500'} 
                                     alt={product.name}
                                     className={`product-main-image ${isUnavailable ? 'is-unavailable' : ''}`}
                                 />
@@ -309,7 +311,7 @@ const ProductDetails = () => {
                         <X size={20} />
                     </button>
                     <img
-                        src={product.image_url || 'https://via.placeholder.com/1200'}
+                        src={productImageUrl || 'https://via.placeholder.com/1200'}
                         alt={product.name}
                         className="image-view-preview"
                         onClick={(e) => e.stopPropagation()}

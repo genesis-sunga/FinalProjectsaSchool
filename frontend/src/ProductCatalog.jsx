@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import Swal from 'sweetalert2';
 import { ShoppingCart, LogOut, Eye, EyeOff, X, Mic, MicOff, Search, Menu } from 'lucide-react';
+import { toAssetUrl } from './apiConfig';
 import './ProductCatalog.css';
 
 const ALLOWED_SUFFIXES = ['', 'Jr.', 'Sr.', 'II', 'III', 'IV', 'V'];
@@ -798,7 +799,7 @@ const ProductCatalog = () => {
                             >
                                 <div className="product-image">
                                     <img
-                                        src={product.image_url || 'https://via.placeholder.com/200'}
+                                        src={toAssetUrl(product.image_url) || 'https://via.placeholder.com/200'}
                                         alt={product.name}
                                     />
                                 </div>

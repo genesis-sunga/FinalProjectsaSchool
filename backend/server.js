@@ -79,6 +79,49 @@ if (!fs.existsSync(invoiceUploadDir)) {
 // Serve uploaded files as static
 app.use('/uploads', express.static(uploadDir));
 
+function toPublicAssetUrl(value) {
+    if (!value || typeof value !== 'string') return value || null;
+
+    const trimmedValue = value.trim();
+    if (!trimmedValue) return null;
+
+    if (/^https?:\/\//i.test(trimmedValue)) {
+        try {
+            const parsedUrl = new URL(trimmedValue);
+            if (parsedUrl.hostname === 'localhost' || parsedUrl.hostname === '127.0.0.1') {
+                return `${APP_BASE_URL}${parsedUrl.pathname}${parsedUrl.search}${parsedUrl.hash}`;
+            }
+        } catch {
+            return trimmedValue;
+        }
+
+        return trimmedValue;
+    }
+
+    if (trimmedValue.startsWith('/')) {
+        return `${APP_BASE_URL}${trimmedValue}`;
+    }
+
+    if (trimmedValue.startsWith('uploads/')) {
+        return `${APP_BASE_URL}/${trimmedValue}`;
+    }
+
+    const uploadCandidate = path.join(uploadDir, trimmedValue);
+    if (fs.existsSync(uploadCandidate)) {
+        return `${APP_BASE_URL}/uploads/${trimmedValue}`;
+    }
+
+    return `${APP_BASE_URL}/${trimmedValue}`;
+}
+
+function withPublicProductImage(product) {
+    if (!product) return product;
+    return {
+        ...product,
+        image_url: toPublicAssetUrl(product.image_url)
+    };
+}
+
 function buildInvoicePdf(order, customer, items, invoiceNumber, filePath, meta = {}) {
     return new Promise((resolve, reject) => {
         const doc = new PDFDocument({ margin: 50, size: 'A4' });
@@ -809,7 +852,7 @@ app.get('/api/products', (req, res) => {
 
     db.query(sql, params, (err, results) => {
         if (err) return res.status(500).json({ message: "Database error" });
-        res.json(results);
+        res.json((results || []).map(withPublicProductImage));
     });
 });
 
@@ -821,7 +864,7 @@ app.get('/api/products/:id', (req, res) => {
     db.query(sql, [id], (err, result) => {
         if (err) return res.status(500).json({ message: "Database error" });
         if (result.length === 0) return res.status(404).json({ message: "Product not found" });
-        res.json(result[0]);
+        res.json(withPublicProductImage(result[0]));
     });
 });
 
@@ -1362,7 +1405,7 @@ app.get('/api/admin/deleted-products', checkRole('admin'), (req, res) => {
 
     db.query(sql, (err, results) => {
         if (err) return res.status(500).json({ message: "Database error" });
-        res.json(results);
+        res.json((results || []).map(withPublicProductImage));
     });
 });
 
@@ -3914,7 +3957,7 @@ app.get('/api/admin/low-stock', checkRole(['admin', 'worker']), (req, res) => {
     
     db.query(sql, (err, results) => {
         if (err) return res.status(500).json({ message: "Database error" });
-        res.json(results);
+        res.json((results || []).map(withPublicProductImage));
     });
 });
 
@@ -3985,7 +4028,7 @@ app.get('/api/products/search', (req, res) => {
 
     db.query(sql, params, (err, results) => {
         if (err) return res.status(500).json({ message: "Database error" });
-        res.json(results);
+        res.json((results || []).map(withPublicProductImage));
     });
 });
 
@@ -4015,7 +4058,7 @@ app.get('/api/analytics/best-sellers', (req, res) => {
 
     db.query(sql, (err, results) => {
         if (err) return res.status(500).json({ message: "Database error" });
-        res.json({ period, bestSellers: results });
+        res.json({ period, bestSellers: (results || []).map(withPublicProductImage) });
     });
 });
 

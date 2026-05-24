@@ -10,6 +10,12 @@ export const toApiUrl = (url) => {
     return url.startsWith(LOCAL_API_ORIGIN) ? `${API_BASE_URL}${url.slice(LOCAL_API_ORIGIN.length)}` : url;
 };
 
+export const toAssetUrl = (url) => {
+    if (typeof url !== 'string' || !url.trim()) return url;
+    if (url.startsWith('/uploads/')) return `${API_BASE_URL}${url}`;
+    return toApiUrl(url);
+};
+
 axios.interceptors.request.use((config) => ({
     ...config,
     url: toApiUrl(config.url)
