@@ -54,7 +54,9 @@ if (!fs.existsSync(uploadDir)) {
 function resolveFrontendDistPath() {
     const possibleDistPaths = [
         path.join(__dirname, 'public'),
-        path.join(__dirname, '..', 'frontend', 'dist')
+        path.join(__dirname, '..', 'frontend', 'dist'),
+        path.join(__dirname, '..', 'dist'),
+        path.join(__dirname, '..', 'build')
     ];
 
     return possibleDistPaths.find((distPath) => fs.existsSync(path.join(distPath, 'index.html')));
