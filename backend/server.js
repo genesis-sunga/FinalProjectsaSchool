@@ -302,13 +302,69 @@ const checkRole = (requiredRole) => {
 };
 
 // --- 3. EMAIL CONFIG ---
+const mailUser = String(process.env.MAIL_USER || '').trim();
+const mailPass = String(process.env.MAIL_PASS || '').trim();
+const mailFrom = String(process.env.MAIL_FROM || `"TongTong Fish Culture" <${mailUser}>`).trim();
+const mailHost = String(process.env.MAIL_HOST || 'smtp.hostinger.com').trim();
+const mailTlsRejectUnauthorized = String(process.env.MAIL_TLS_REJECT_UNAUTHORIZED || 'true').toLowerCase() !== 'false';
+const publicContactEmail = process.env.PUBLIC_CONTACT_EMAIL || mailUser;
+
 const transporter = nodemailer.createTransport({
-    service: process.env.MAIL_SERVICE || 'gmail',
+    host: mailHost,
+    port: Number(process.env.MAIL_PORT || 465),
+    secure: String(process.env.MAIL_SECURE || 'true').toLowerCase() !== 'false',
     auth: {
-        user: process.env.MAIL_USER,
-        pass: process.env.MAIL_PASS
+        user: mailUser,
+        pass: mailPass
+    },
+    tls: {
+        servername: mailHost,
+        rejectUnauthorized: mailTlsRejectUnauthorized
     }
 });
+
+function buildOtpMail({ title, intro, otpCode, expiresIn = '10 minutes' }) {
+    const safeTitle = title || 'Your verification code';
+    const safeIntro = intro || 'Use the verification code below to continue.';
+
+    return {
+        text: `${safeIntro}\n\nYour OTP code is: ${otpCode}\n\nThis code expires in ${expiresIn}. If you did not request this code, you can ignore this email.`,
+        html: `
+            <div style="margin:0;padding:24px;background:#f4fbfa;font-family:Arial,Helvetica,sans-serif;color:#12302f;">
+                <div style="max-width:520px;margin:0 auto;background:#ffffff;border:1px solid #d9eeee;border-radius:8px;overflow:hidden;">
+                    <div style="padding:20px 24px;background:#0f766e;color:#ffffff;">
+                        <h1 style="margin:0;font-size:20px;line-height:1.3;">TongTong Fish Culture</h1>
+                    </div>
+                    <div style="padding:24px;">
+                        <h2 style="margin:0 0 12px;font-size:18px;color:#12302f;">${safeTitle}</h2>
+                        <p style="margin:0 0 18px;font-size:14px;line-height:1.6;color:#315655;">${safeIntro}</p>
+                        <div style="margin:0 0 18px;padding:18px;background:#e7f7f5;border:1px solid #bfe5e0;border-radius:8px;text-align:center;">
+                            <div style="font-size:32px;font-weight:700;letter-spacing:6px;color:#0f766e;">${otpCode}</div>
+                        </div>
+                        <p style="margin:0 0 8px;font-size:13px;line-height:1.5;color:#5d7473;">This code expires in ${expiresIn}.</p>
+                        <p style="margin:0;font-size:13px;line-height:1.5;color:#5d7473;">If you did not request this code, you can ignore this email.</p>
+                    </div>
+                </div>
+            </div>
+        `
+    };
+}
+
+function sendOtpEmail(to, subject, otpCode, options = {}, callback = () => {}) {
+    const otpMail = buildOtpMail({
+        title: options.title || subject,
+        intro: options.intro,
+        otpCode,
+        expiresIn: options.expiresIn
+    });
+
+    transporter.sendMail({
+        from: mailFrom,
+        to,
+        subject,
+        ...otpMail
+    }, callback);
+}
 
 // Change time kapag mag testing sa school, hihihihi
 const LOW_STOCK_DIGEST_HOUR = Number(process.env.LOW_STOCK_DIGEST_HOUR ?? 19);
@@ -467,7 +523,7 @@ function sendDailyLowStockDigest() {
 
             transporter.sendMail(
                 {
-                    from: 'tongtongornamental@gmail.com',
+                    from: mailFrom,
                     to: recipients.join(','),
                     subject: `Daily Low Stock Report - ${dateLabel}`,
                     html
@@ -594,13 +650,23 @@ app.post('/api/signup', (req, res) => {
             db.query(sql, [trimmedFirstName, middleName, trimmedLastName, normalizedSuffix, normalizedGender, normalizedEmail, hashedPassword, formattedDate, trimmedAddress, normalizedContact, otpCode, expiresAt, roleId], (insErr) => {
                 if (insErr) return res.status(500).json({ message: "Registration failed" });
 
-                transporter.sendMail({
-                    from: '"TongTong Fish Culture"',
-                    to: normalizedEmail,
-                    subject: 'Verify Your Account',
-                    text: `Your verification code is: ${otpCode}`
-                });
-                res.json({ message: "OTP sent!" });
+                sendOtpEmail(
+                    normalizedEmail,
+                    'Verify Your Account',
+                    otpCode,
+                    {
+                        title: 'Verify Your Account',
+                        intro: 'Use this OTP code to finish creating your TongTong Fish Culture account.',
+                        expiresIn: '10 minutes'
+                    },
+                    (mailErr) => {
+                        if (mailErr) {
+                            console.error('Signup OTP email error:', mailErr.message || mailErr);
+                            return res.status(500).json({ message: 'Account created, but OTP email could not be sent' });
+                        }
+                        res.json({ message: "OTP sent!" });
+                    }
+                );
             });
         });
     });
@@ -609,7 +675,11 @@ app.post('/api/signup', (req, res) => {
 // --- 5. VERIFY ACCOUNT (New route for Verification.jsx) ---
 app.post('/api/verify-account', (req, res) => {
     const { email, otp } = req.body;
-    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedEmail = String(email || '').trim().toLowerCase();
+
+    if (!normalizedEmail || !otp) {
+        return res.status(400).json({ message: 'Email and OTP are required' });
+    }
     
     const sql = "SELECT * FROM user_accounts WHERE email = ? AND otp = ? AND otp_expires_at > NOW() AND is_deleted = 0";
     
@@ -631,7 +701,12 @@ app.post('/api/verify-account', (req, res) => {
 // --- 5. RESEND OTP (New route for Verification.jsx) ---
 app.post('/api/resend-otp', (req, res) => {
     const { email } = req.body;
-    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedEmail = String(email || '').trim().toLowerCase();
+
+    if (!normalizedEmail) {
+        return res.status(400).json({ message: 'Email is required' });
+    }
+
     const otpCode = Math.floor(1000 + Math.random() * 9000).toString();
     const expiresAt = new Date(Date.now() + 5 * 60000); // 5 minutes
 
@@ -639,20 +714,35 @@ app.post('/api/resend-otp', (req, res) => {
     [otpCode, expiresAt, normalizedEmail], (err, result) => {
         if (err || result.affectedRows === 0) return res.status(404).json({ message: "Account not found" });
 
-        transporter.sendMail({
-            from: '"TongTong Fish Culture"',
-            to: normalizedEmail,
-            subject: 'New Verification Code',
-            text: `Your new code is: ${otpCode}`
-        });
-        res.json({ message: "New OTP sent" });
+        sendOtpEmail(
+            normalizedEmail,
+            'New Verification Code',
+            otpCode,
+            {
+                title: 'New Verification Code',
+                intro: 'Use this new OTP code to verify your TongTong Fish Culture account.',
+                expiresIn: '5 minutes'
+            },
+            (mailErr) => {
+                if (mailErr) {
+                    console.error('Resend OTP email error:', mailErr.message || mailErr);
+                    return res.status(500).json({ message: 'OTP was generated, but email could not be sent' });
+                }
+                res.json({ message: "New OTP sent" });
+            }
+        );
     });
 });
 
 // --- 7. LOGIN ROUTE (UPDATED with role info) ---
 app.post('/api/login', (req, res) => {
     const { email, password } = req.body;
-    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedEmail = String(email || '').trim().toLowerCase();
+
+    if (!normalizedEmail || !password) {
+        return res.status(400).json({ message: 'Email and password are required' });
+    }
+
     const sql = "SELECT u.*, r.role_name FROM user_accounts u LEFT JOIN roles r ON u.role_id = r.role_id WHERE u.email = ? AND u.is_deleted = 0";
     
     db.query(sql, [normalizedEmail], (err, result) => {
@@ -752,7 +842,12 @@ app.post('/api/logout', (req, res) => {
 // --- 8. FORGOT PASSWORD: SEND OTP ---
 app.post('/api/send-otp', (req, res) => {
     const { email } = req.body;
-    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedEmail = String(email || '').trim().toLowerCase();
+
+    if (!normalizedEmail) {
+        return res.status(400).json({ message: 'Email is required' });
+    }
+
     const otpCode = Math.floor(1000 + Math.random() * 9000).toString();
     const expiresAt = new Date(Date.now() + 10 * 60000); 
 
@@ -761,20 +856,34 @@ app.post('/api/send-otp', (req, res) => {
     [otpCode, expiresAt, normalizedEmail], (err, result) => {
         if (err || result.affectedRows === 0) return res.status(404).json({ message: "Email not found" });
 
-        transporter.sendMail({
-            from: '"TongTong Fish Culture"',
-            to: normalizedEmail,
-            subject: 'Password Reset Code',
-            text: `Recovery code: ${otpCode}`
-        });
-        res.json({ message: "OTP sent" });
+        sendOtpEmail(
+            normalizedEmail,
+            'Password Reset Code',
+            otpCode,
+            {
+                title: 'Password Reset Code',
+                intro: 'Use this OTP code to reset your TongTong Fish Culture password.',
+                expiresIn: '10 minutes'
+            },
+            (mailErr) => {
+                if (mailErr) {
+                    console.error('Forgot password OTP email error:', mailErr.message || mailErr);
+                    return res.status(500).json({ message: 'OTP was generated, but email could not be sent' });
+                }
+                res.json({ message: "OTP sent" });
+            }
+        );
     });
 });
 
 // --- 8. FORGOT PASSWORD: VERIFY OTP (Step 1 of ForgotPassword.jsx) ---
 app.post('/api/verify-otp', (req, res) => {
     const { email, otp } = req.body;
-    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedEmail = String(email || '').trim().toLowerCase();
+
+    if (!normalizedEmail || !otp) {
+        return res.status(400).json({ message: 'Email and OTP are required' });
+    }
     
     const sql = "SELECT * FROM user_accounts WHERE email = ? AND otp = ? AND otp_expires_at > NOW() AND is_deleted = 0";
     
@@ -794,7 +903,11 @@ app.post('/api/verify-otp', (req, res) => {
 // --- 9. RESET PASSWORD ---
 app.post('/api/reset-password', (req, res) => {
     const { email, newPassword } = req.body;
-    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedEmail = String(email || '').trim().toLowerCase();
+
+    if (!normalizedEmail || !newPassword) {
+        return res.status(400).json({ message: 'Email and new password are required' });
+    }
 
     // Check if they just verified their OTP (is_verified = 1)
     db.query("SELECT * FROM user_accounts WHERE email = ? AND is_verified = 1", [normalizedEmail], (err, result) => {
@@ -1204,7 +1317,7 @@ async function sendDiscontinuedProductInvoiceUpdateEmail(orderId, productName, a
     await new Promise((resolve, reject) => {
         transporter.sendMail(
             {
-                from: 'tongtongornamental@gmail.com',
+                from: mailFrom,
                 to: order.email,
                 subject: `Order Updated - Item Discontinued (Order ${getOrderDisplayNumber(order)})`,
                 html: `
@@ -1263,7 +1376,7 @@ async function sendDiscontinuedProductInvoiceUpdateEmail(orderId, productName, a
 
                         <div class="footer">
                             <p>Thank you for shopping with TongTong Ornamental Fish Store!</p>
-                            <p>If you have any questions, please contact us at tongtongornamental@gmail.com</p>
+                            <p>If you have any questions, please contact us at ${publicContactEmail}</p>
                         </div>
                     </body>
                     </html>
@@ -1735,7 +1848,7 @@ function sendOrderReceipt(orderId, userId, invoiceId, res) {
                 
                 // Send email
                 const mailOptions = {
-                    from: 'tongtongornamental@gmail.com',
+                    from: mailFrom,
                     to: userEmail,
                     subject: `Order Receipt ${orderDisplayNumber} - ${new Date(order.created_at).toLocaleDateString()} - TongTong Ornamental Fish Store`,
                     html: receiptHtml
@@ -2146,7 +2259,7 @@ app.post('/api/worker/send-receipt-email', checkRole(['admin', 'worker']), (req,
 
             const receiptHtml = generateReceiptHtml(order, itemsRows, userName);
             const mailOptions = {
-                from: 'tongtongornamental@gmail.com',
+                from: mailFrom,
                 to: order.email,
                 subject: `Order Receipt ${getOrderDisplayNumber(order)} - ${new Date(order.created_at).toLocaleDateString()} - TongTong Ornamental Fish Store`,
                 html: receiptHtml
@@ -2351,7 +2464,7 @@ function sendPaymentConfirmationInvoiceEmail(orderId, requestedByUserId, callbac
                 : `${APP_BASE_URL}/api/orders/${payload.order_id}/invoice-pdf?userId=${payload.user_id}`;
 
             const mailOptions = {
-                from: 'tongtongornamental@gmail.com',
+                from: mailFrom,
                 to: payload.email,
                 subject: `Payment Confirmed - Order ${getOrderDisplayNumber(payload)} - ${new Date(payload.created_at).toLocaleDateString()} (Invoice ${payload.invoice_number})`,
                 html: `
@@ -3442,7 +3555,7 @@ function generateReceiptHtml(order, items, userName) {
             
             <div class="footer">
                 <p>Thank you for shopping with TongTong Ornamental Fish Store!</p>
-                <p>If you have any questions, please contact us at tongtongornamental@gmail.com</p>
+                <p>If you have any questions, please contact us at ${publicContactEmail}</p>
             </div>
         </body>
         </html>
@@ -3525,7 +3638,7 @@ function generateCancellationInvoice(userData, orderItems, cancellationRequest, 
                 
                 <div class="footer">
                     <p>Thank you for understanding. We appreciate your business!</p>
-                    <p>For questions or concerns about this cancellation, please contact us at <strong>tongtongornamental@gmail.com</strong></p>
+                    <p>For questions or concerns about this cancellation, please contact us at <strong>${publicContactEmail}</strong></p>
                     <p style="margin-top: 20px; color: #999;">TongTong Ornamental Fish Store | All Rights Reserved</p>
                 </div>
             </div>
@@ -3915,7 +4028,7 @@ app.put('/api/admin/cancellation-requests/:requestId', checkRole(['admin', 'work
                                                             const cancellationHtml = generateCancellationInvoice(userData, orderItems, request);
                                                             
                                                             const mailOptions = {
-                                                                from: 'tongtongornamental@gmail.com',
+                                                                from: mailFrom,
                                                                 to: userData.email,
                                                                 subject: `Order Cancellation Confirmed - Order ${getOrderDisplayNumber(userData)} - ${new Date(userData.created_at).toLocaleDateString()}`,
                                                                 html: cancellationHtml
