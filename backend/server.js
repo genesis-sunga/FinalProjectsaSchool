@@ -211,41 +211,26 @@ const upload = multer({
 });
 
 // --- 1. DATABASE CONNECTION ---
-let db;
+const db = mysql.createPool({
+    connectionLimit: Number(process.env.DB_CONNECTION_LIMIT || 10),
+    host: process.env.DB_HOST || "localhost",
+    user: process.env.DB_USER || "root",
+    password: process.env.DB_PASSWORD || "",
+    database: process.env.DB_NAME || "db_project",
+    port: Number(process.env.DB_PORT || 3306),
+    charset: 'utf8mb4'
+});
 
-function createDbConnection() {
-    return mysql.createConnection({
-        host: process.env.DB_HOST || "localhost",
-        user: process.env.DB_USER || "root",
-        password: process.env.DB_PASSWORD || "",
-        database: process.env.DB_NAME || "db_project",
-        port: Number(process.env.DB_PORT || 3306),
-        charset: 'utf8mb4'
-    });
-}
+db.getConnection((err, connection) => {
+    if (err) {
+        console.error("MySQL pool connection error:", err.message);
+        return;
+    }
 
-function connectDatabase() {
-    db = createDbConnection();
-
-    db.connect(err => {
-        if (err) {
-            console.error("MySQL connection error:", err.message);
-            setTimeout(connectDatabase, 5000);
-            return;
-        }
-
-        console.log("Connected to MySQL Database.");
-        runStartupDatabaseTasks();
-    });
-
-    db.on('error', (err) => {
-        console.error("MySQL connection lost:", err.message);
-        if (err.fatal || err.code === 'PROTOCOL_CONNECTION_LOST' || err.code === 'ECONNRESET') {
-            setTimeout(connectDatabase, 5000);
-            return;
-        }
-    });
-}
+    connection.release();
+    console.log("Connected to MySQL Database.");
+    runStartupDatabaseTasks();
+});
 
 function runStartupDatabaseTasks() {
 
@@ -276,8 +261,6 @@ function runStartupDatabaseTasks() {
         });
     });
 }
-
-connectDatabase();
 
 // --- 2. ROLE CHECK MIDDLEWARE ---
 const checkRole = (requiredRole) => {
