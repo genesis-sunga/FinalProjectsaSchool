@@ -52,14 +52,23 @@ if (!fs.existsSync(uploadDir)) {
 }
 
 function resolveFrontendDistPath() {
-    const possibleDistPaths = [
+    return getFrontendDistCandidates().find((distPath) => fs.existsSync(path.join(distPath, 'index.html')));
+}
+
+function getFrontendDistCandidates() {
+    return [
         path.join(__dirname, 'public'),
+        path.join(__dirname, 'dist'),
+        path.join(__dirname, 'build'),
         path.join(__dirname, '..', 'frontend', 'dist'),
         path.join(__dirname, '..', 'dist'),
-        path.join(__dirname, '..', 'build')
+        path.join(__dirname, '..', 'build'),
+        path.join(process.cwd(), 'public'),
+        path.join(process.cwd(), 'dist'),
+        path.join(process.cwd(), 'build'),
+        path.join(process.cwd(), 'backend', 'public'),
+        path.join(process.cwd(), 'frontend', 'dist')
     ];
-
-    return possibleDistPaths.find((distPath) => fs.existsSync(path.join(distPath, 'index.html')));
 }
 
 const invoiceUploadDir = path.join(uploadDir, 'invoices');
@@ -4316,6 +4325,19 @@ app.get('/api/categories', (req, res) => {
 });
 
 const frontendDistPath = resolveFrontendDistPath();
+
+app.get('/api/health/frontend', (req, res) => {
+    res.json({
+        frontendDistPath: frontendDistPath || null,
+        cwd: process.cwd(),
+        dirname: __dirname,
+        candidates: getFrontendDistCandidates().map((candidatePath) => ({
+            path: candidatePath,
+            hasIndex: fs.existsSync(path.join(candidatePath, 'index.html'))
+        }))
+    });
+});
+
 if (frontendDistPath) {
     app.use(express.static(frontendDistPath));
     app.use((req, res, next) => {
