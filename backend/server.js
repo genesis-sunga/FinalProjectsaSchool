@@ -20,7 +20,6 @@ if (!JWT_SECRET) {
 }
 
 const PORT = Number(process.env.PORT || 5000);
-const HOST = process.env.HOST || '0.0.0.0';
 const APP_BASE_URL = (process.env.APP_BASE_URL || `http://localhost:${PORT}`).replace(/\/$/, '');
 
 function authenticateToken(req, res, next) {
@@ -45,7 +44,6 @@ app.use(cors({
     credentials: true
 }));
 app.use(express.json());
-app.set('trust proxy', true);
 
 // Create uploads directory if it doesn't exist
 const uploadDir = path.join(__dirname, 'uploads');
@@ -213,28 +211,18 @@ const upload = multer({
 });
 
 // --- 1. DATABASE CONNECTION ---
-const db = mysql.createPool({
-    connectionLimit: Number(process.env.DB_CONNECTION_LIMIT || 10),
-    host: process.env.DB_HOST ,
-    user: process.env.DB_USER  ,
-    password: process.env.DB_PASSWORD  ,
-    database: process.env.DB_NAME ,
+const db = mysql.createConnection({
+    host: process.env.DB_HOST || "localhost",
+    user: process.env.DB_USER || "root",
+    password: process.env.DB_PASSWORD || "",
+    database: process.env.DB_NAME || "db_project",
     port: Number(process.env.DB_PORT || 3306),
-    charset: 'utf8mb4'
+    charset: 'utf8mb4' 
 });
 
-db.getConnection((err, connection) => {
-    if (err) {
-        console.error("MySQL pool connection error:", err.message);
-        return;
-    }
-
-    connection.release();
+db.connect(err => {
+    if (err) throw err;
     console.log("Connected to MySQL Database.");
-    runStartupDatabaseTasks();
-});
-
-function runStartupDatabaseTasks() {
 
     // Legacy cleanup: processing is now treated as pending in order flows.
     db.query("UPDATE orders SET status = 'pending' WHERE status = 'processing'", (statusFixErr) => {
@@ -262,7 +250,7 @@ function runStartupDatabaseTasks() {
             }
         });
     });
-}
+});
 
 // --- 2. ROLE CHECK MIDDLEWARE ---
 const checkRole = (requiredRole) => {
@@ -322,12 +310,16 @@ const mailTlsRejectUnauthorized = String(process.env.MAIL_TLS_REJECT_UNAUTHORIZE
 const publicContactEmail = process.env.PUBLIC_CONTACT_EMAIL || mailUser;
 
 const transporter = nodemailer.createTransport({
-    host: 'smtp.hostinger.com',
-    port: 465,
-    secure: true, // true for port 465
+    host: mailHost,
+    port: Number(process.env.MAIL_PORT || 465),
+    secure: String(process.env.MAIL_SECURE || 'true').toLowerCase() !== 'false',
     auth: {
-        user: process.env.EMAIL_USER, 
-        pass: process.env.EMAIL_PASS
+        user: mailUser,
+        pass: mailPass
+    },
+    tls: {
+        servername: mailHost,
+        rejectUnauthorized: mailTlsRejectUnauthorized
     }
 });
 
@@ -368,19 +360,10 @@ function sendOtpEmail(to, subject, otpCode, options = {}, callback = () => {}) {
 
     transporter.sendMail({
         from: mailFrom,
-        envelope: {
-            from: mailUser,
-            to
-        },
-        replyTo: publicContactEmail,
         to,
         subject,
         ...otpMail
-    }, (mailErr, info) => {
-        if (mailErr) return callback(mailErr);
-        console.log(`OTP email sent to ${to}: accepted=${(info.accepted || []).join(',') || '-'} rejected=${(info.rejected || []).join(',') || '-'} response=${info.response || '-'}`);
-        callback(null, info);
-    });
+    }, callback);
 }
 
 // Change time kapag mag testing sa school, hihihihi
@@ -577,36 +560,6 @@ function startLowStockDigestScheduler() {
     );
 }
 
-function createUserSession(req, user, email, callback) {
-    const normalizedEmail = String(email || user?.email || '').trim().toLowerCase();
-    const sessionToken = crypto.randomBytes(24).toString('hex');
-    const ipAddress = req.headers['x-forwarded-for']?.split(',')?.[0]?.trim() || req.socket?.remoteAddress || null;
-    const userAgent = req.headers['user-agent'] || null;
-
-    const logSql = `
-        INSERT INTO user_session_logs (user_id, email, role_name, login_at, login_success, ip_address, user_agent, session_token)
-        VALUES (?, ?, ?, NOW(), 1, ?, ?, ?)
-    `;
-
-    db.query(
-        logSql,
-        [user.user_id, normalizedEmail, user.role_name || null, ipAddress, userAgent, sessionToken],
-        (logErr, logResult) => {
-            if (logErr) {
-                console.error('Login log insert error:', logErr);
-                return callback(null, { message: "Success", user });
-            }
-
-            callback(null, {
-                message: "Success",
-                user,
-                sessionLogId: logResult.insertId,
-                sessionToken
-            });
-        }
-    );
-}
-
 // --- 4. SIGNUP ROUTE (UPDATED with roles) ---
 app.post('/api/signup', (req, res) => {
     const { firstName, middleName, lastName, suffix, gender, birthday, contact, address, email, password } = req.body;
@@ -711,7 +664,7 @@ app.post('/api/signup', (req, res) => {
                             console.error('Signup OTP email error:', mailErr.message || mailErr);
                             return res.status(500).json({ message: 'Account created, but OTP email could not be sent' });
                         }
-                        res.json({ message: "OTP sent!", email: normalizedEmail });
+                        res.json({ message: "OTP sent!" });
                     }
                 );
             });
@@ -723,62 +676,25 @@ app.post('/api/signup', (req, res) => {
 app.post('/api/verify-account', (req, res) => {
     const { email, otp } = req.body;
     const normalizedEmail = String(email || '').trim().toLowerCase();
-    const normalizedOtp = String(otp || '').trim();
 
-    if (!normalizedEmail || !normalizedOtp) {
+    if (!normalizedEmail || !otp) {
         return res.status(400).json({ message: 'Email and OTP are required' });
     }
     
-    const sql = `
-        SELECT u.*, r.role_name
-        FROM user_accounts u
-        LEFT JOIN roles r ON u.role_id = r.role_id
-        WHERE u.email = ? AND u.is_deleted = 0
-    `;
+    const sql = "SELECT * FROM user_accounts WHERE email = ? AND otp = ? AND otp_expires_at > NOW() AND is_deleted = 0";
     
-    db.query(sql, [normalizedEmail], (err, result) => {
+    db.query(sql, [normalizedEmail, otp], (err, result) => {
         if (err) return res.status(500).json({ message: "Database error" });
-
-        if (result.length === 0) {
-            return res.status(404).json({ message: "Account not found" });
-        }
-
-        const user = result[0];
-
-        if (Number(user.is_verified) === 1) {
-            return res.status(409).json({ message: "Account already verified. Please log in." });
-        }
-
-        if (!user.otp || !user.otp_expires_at) {
-            return res.status(400).json({ message: "No active OTP. Please resend a new code." });
-        }
-
-        if (new Date(user.otp_expires_at).getTime() <= Date.now()) {
-            return res.status(400).json({ message: "Expired OTP. Please resend a new code." });
-        }
-
-        if (String(user.otp).trim() !== normalizedOtp) {
-            return res.status(400).json({ message: "Invalid OTP" });
-        }
-
-        db.query(
-            "UPDATE user_accounts SET is_verified = 1, otp = NULL, otp_expires_at = NULL WHERE user_id = ?",
-            [user.user_id],
-            (updErr) => {
+        
+        if (result.length > 0) {
+            // Mark as verified and clear OTP
+            db.query("UPDATE user_accounts SET is_verified = 1, otp = NULL, otp_expires_at = NULL WHERE email = ?", [normalizedEmail], (updErr) => {
                 if (updErr) return res.status(500).json({ message: "Update error" });
-
-                const verifiedUser = {
-                    ...user,
-                    is_verified: 1,
-                    otp: null,
-                    otp_expires_at: null
-                };
-
-                createUserSession(req, verifiedUser, normalizedEmail, (_sessionErr, payload) => {
-                    res.json({ ...payload, message: "Account verified successfully!" });
-                });
-            }
-        );
+                res.json({ message: "Account verified successfully!" });
+            });
+        } else {
+            res.status(400).json({ message: "Invalid or Expired OTP" });
+        }
     });
 });
 
@@ -791,23 +707,12 @@ app.post('/api/resend-otp', (req, res) => {
         return res.status(400).json({ message: 'Email is required' });
     }
 
-    db.query("SELECT user_id, is_verified FROM user_accounts WHERE email = ? AND is_deleted = 0", [normalizedEmail], (findErr, rows) => {
-        if (findErr) {
-            console.error('Resend OTP lookup error:', findErr.message || findErr);
-            return res.status(500).json({ message: "Database error" });
-        }
-        if (rows.length === 0) return res.status(404).json({ message: "Account not found" });
-        if (Number(rows[0].is_verified) === 1) return res.status(409).json({ message: "Account is already verified" });
+    const otpCode = Math.floor(1000 + Math.random() * 9000).toString();
+    const expiresAt = new Date(Date.now() + 5 * 60000); // 5 minutes
 
-        const otpCode = Math.floor(1000 + Math.random() * 9000).toString();
-        const expiresAt = new Date(Date.now() + 10 * 60000); // 10 minutes
-
-        db.query("UPDATE user_accounts SET otp = ?, otp_expires_at = ? WHERE user_id = ?", 
-        [otpCode, expiresAt, rows[0].user_id], (err) => {
-        if (err) {
-            console.error('Resend OTP database error:', err.message || err);
-            return res.status(500).json({ message: "Database error" });
-        }
+    db.query("UPDATE user_accounts SET otp = ?, otp_expires_at = ? WHERE email = ? AND is_deleted = 0", 
+    [otpCode, expiresAt, normalizedEmail], (err, result) => {
+        if (err || result.affectedRows === 0) return res.status(404).json({ message: "Account not found" });
 
         sendOtpEmail(
             normalizedEmail,
@@ -816,7 +721,7 @@ app.post('/api/resend-otp', (req, res) => {
             {
                 title: 'New Verification Code',
                 intro: 'Use this new OTP code to verify your TongTong Fish Culture account.',
-                expiresIn: '10 minutes'
+                expiresIn: '5 minutes'
             },
             (mailErr) => {
                 if (mailErr) {
@@ -826,7 +731,6 @@ app.post('/api/resend-otp', (req, res) => {
                 res.json({ message: "New OTP sent" });
             }
         );
-        });
     });
 });
 
@@ -854,7 +758,32 @@ app.post('/api/login', (req, res) => {
             
             if (user.is_verified === 0) return res.status(403).json({ message: "Unverified" });
 
-            createUserSession(req, user, normalizedEmail, (_sessionErr, payload) => res.json(payload));
+            const sessionToken = crypto.randomBytes(24).toString('hex');
+            const ipAddress = req.headers['x-forwarded-for']?.split(',')?.[0]?.trim() || req.socket?.remoteAddress || null;
+            const userAgent = req.headers['user-agent'] || null;
+
+            const logSql = `
+                INSERT INTO user_session_logs (user_id, email, role_name, login_at, login_success, ip_address, user_agent, session_token)
+                VALUES (?, ?, ?, NOW(), 1, ?, ?, ?)
+            `;
+
+            db.query(
+                logSql,
+                [user.user_id, normalizedEmail, user.role_name || null, ipAddress, userAgent, sessionToken],
+                (logErr, logResult) => {
+                    if (logErr) {
+                        console.error('Login log insert error:', logErr);
+                        return res.json({ message: "Success", user: user });
+                    }
+
+                    res.json({
+                        message: "Success",
+                        user: user,
+                        sessionLogId: logResult.insertId,
+                        sessionToken
+                    });
+                }
+            );
         });
     });
 });
@@ -925,11 +854,7 @@ app.post('/api/send-otp', (req, res) => {
     // Temporarily set is_verified to 0 during the reset process for security
     db.query("UPDATE user_accounts SET otp = ?, otp_expires_at = ?, is_verified = 0 WHERE email = ? AND is_deleted = 0", 
     [otpCode, expiresAt, normalizedEmail], (err, result) => {
-        if (err) {
-            console.error('Forgot password OTP database error:', err.message || err);
-            return res.status(500).json({ message: "Database error" });
-        }
-        if (result.affectedRows === 0) return res.status(404).json({ message: "Email not found" });
+        if (err || result.affectedRows === 0) return res.status(404).json({ message: "Email not found" });
 
         sendOtpEmail(
             normalizedEmail,
@@ -4584,4 +4509,4 @@ if (frontendDistPath) {
 
 startLowStockDigestScheduler();
 
-app.listen(PORT, HOST, () => console.log(`Server running on http://${HOST}:${PORT}`));
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
