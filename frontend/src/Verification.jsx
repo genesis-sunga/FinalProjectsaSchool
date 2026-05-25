@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { KeyRound, Clock, RotateCcw, ShieldCheck, ArrowLeft, Mail } from 'lucide-react';
+import { KeyRound, Clock, RotateCcw, ShieldCheck, ArrowLeft } from 'lucide-react';
 import Swal from 'sweetalert2';
 import axios from 'axios';
 import './Verification.css';
@@ -28,12 +28,9 @@ const Verification = () => {
     const [backgroundImageUrl, setBackgroundImageUrl] = useState('/isda_bg.png');
     const navigate = useNavigate();
     const location = useLocation();
-
-    const queryEmail = new URLSearchParams(location.search).get('email');
-    const initialEmail = (location.state?.email || queryEmail || sessionStorage.getItem('pendingVerificationEmail') || '').trim().toLowerCase();
-    const [email, setEmail] = useState(initialEmail);
+    
+    const email = (location.state?.email || sessionStorage.getItem('pendingVerificationEmail') || "").trim().toLowerCase();
     const otpAlreadySent = location.state?.otpAlreadySent === true;
-    const shouldAutoSendOtp = useRef(Boolean(initialEmail));
 
     const fetchBackground = async () => {
         try {
@@ -52,13 +49,15 @@ const Verification = () => {
     }, []);
 
     useEffect(() => {
-        if (!email) return;
+        if (!email) {
+            Swal.fire('Verification Needed', 'Please log in or sign up before entering a verification code.', 'warning')
+                .then(() => navigate('/login'));
+            return;
+        }
 
         sessionStorage.setItem('pendingVerificationEmail', email);
 
         if (otpAlreadySent) return;
-        if (!shouldAutoSendOtp.current) return;
-        shouldAutoSendOtp.current = false;
 
         const resendKey = `verificationOtpSentAt:${email}`;
         const lastSentAt = Number(sessionStorage.getItem(resendKey) || 0);
@@ -75,7 +74,7 @@ const Verification = () => {
                 sessionStorage.removeItem(resendKey);
                 Swal.fire('Error', err.response?.data?.message || 'Could not send OTP. Please try again later.', 'error');
             });
-    }, [email, otpAlreadySent]);
+    }, [email, navigate, otpAlreadySent]);
 
     useEffect(() => {
         let interval;
@@ -89,15 +88,14 @@ const Verification = () => {
     }, [timer]);
 
     const handleVerify = async () => {
-        const normalizedEmail = email.trim().toLowerCase();
         const normalizedOtp = otp.trim();
-        if (!normalizedEmail) return Swal.fire('Error', 'Please enter the email address for this OTP.', 'error');
+        if (!email) return Swal.fire('Error', 'Missing verification email. Please log in again.', 'error');
         if (!/^\d{4}$/.test(normalizedOtp)) return Swal.fire('Error', 'Please enter the 4-digit code', 'error');
         if (isTimedOut) return Swal.fire('Expired', 'OTP has timed out. Please resend.', 'error');
 
         try {
             const res = await axios.post('http://localhost:5000/api/verify-account', { 
-                email: normalizedEmail,
+                email, 
                 otp: normalizedOtp 
             });
             
@@ -127,12 +125,10 @@ const Verification = () => {
     };
 
     const handleResend = async () => {
-        const normalizedEmail = email.trim().toLowerCase();
-        if (!normalizedEmail) return Swal.fire('Error', 'Please enter the email address to receive a new OTP.', 'error');
+        if (!email) return Swal.fire('Error', 'Missing verification email. Please log in again.', 'error');
 
         try {
-            sessionStorage.setItem('pendingVerificationEmail', normalizedEmail);
-            await axios.post('http://localhost:5000/api/resend-otp', { email: normalizedEmail });
+            await axios.post('http://localhost:5000/api/resend-otp', { email });
             setTimer(600);
             setIsTimedOut(false);
             setOtp('');
@@ -157,17 +153,6 @@ const Verification = () => {
                             We sent a 4-digit code to <br/>
                             <strong>{email || "your email"}</strong>
                         </p>
-
-                        <div className="input-field-wrapper">
-                            <Mail size={18} className="field-icon-main" />
-                            <input
-                                type="email"
-                                placeholder="Email address"
-                                className="centered-input"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value.trim().toLowerCase())}
-                            />
-                        </div>
 
                         <div className={`timer-badge ${isTimedOut ? 'timeout-text' : ''}`}>
                             <Clock size={16} />
