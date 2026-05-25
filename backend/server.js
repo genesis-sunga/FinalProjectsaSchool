@@ -215,10 +215,10 @@ const upload = multer({
 // --- 1. DATABASE CONNECTION ---
 const db = mysql.createPool({
     connectionLimit: Number(process.env.DB_CONNECTION_LIMIT || 10),
-    host: process.env.DB_HOST || "localhost",
-    user: process.env.DB_USER || "root",
-    password: process.env.DB_PASSWORD || "",
-    database: process.env.DB_NAME || "db_project",
+    host: process.env.DB_HOST ,
+    user: process.env.DB_USER  ,
+    password: process.env.DB_PASSWORD  ,
+    database: process.env.DB_NAME ,
     port: Number(process.env.DB_PORT || 3306),
     charset: 'utf8mb4'
 });
@@ -322,16 +322,12 @@ const mailTlsRejectUnauthorized = String(process.env.MAIL_TLS_REJECT_UNAUTHORIZE
 const publicContactEmail = process.env.PUBLIC_CONTACT_EMAIL || mailUser;
 
 const transporter = nodemailer.createTransport({
-    host: mailHost,
-    port: Number(process.env.MAIL_PORT || 465),
-    secure: String(process.env.MAIL_SECURE || 'true').toLowerCase() !== 'false',
+    host: 'smtp.hostinger.com',
+    port: 465,
+    secure: true, // true for port 465
     auth: {
-        user: mailUser,
-        pass: mailPass
-    },
-    tls: {
-        servername: mailHost,
-        rejectUnauthorized: mailTlsRejectUnauthorized
+        user: process.env.EMAIL_USER, 
+        pass: process.env.EMAIL_PASS
     }
 });
 
