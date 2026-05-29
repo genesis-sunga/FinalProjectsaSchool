@@ -10,7 +10,7 @@ const fs = require('fs');
 const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 const PDFDocument = require('pdfkit');
-const favicon = require('serve-favicon');
+
 // --- ROUTES MOVED BELOW APP INITIALIZATION ---
 // JWT authentication middleware
 const jwt = require('jsonwebtoken');
@@ -23,7 +23,7 @@ if (!JWT_SECRET) {
 const PORT = Number(process.env.PORT || 5000);
 const APP_BASE_URL = (process.env.APP_BASE_URL || `http://localhost:${PORT}`).replace(/\/$/, '');
 
-app.use(favicon(path.join(__dirname, 'build', 'tongtong-logo.png')));
+
 
 function authenticateToken(req, res, next) {
     const authHeader = req.headers['authorization'];
