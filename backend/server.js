@@ -22,6 +22,37 @@ if (!JWT_SECRET) {
 
 const PORT = Number(process.env.PORT || 5000);
 const APP_BASE_URL = (process.env.APP_BASE_URL || `http://localhost:${PORT}`).replace(/\/$/, '');
+const PHILIPPINE_TIME_ZONE = 'Asia/Manila';
+
+const philippineDateTimeFormatter = new Intl.DateTimeFormat('en-PH', {
+    timeZone: PHILIPPINE_TIME_ZONE,
+    year: 'numeric',
+    month: 'short',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: true
+});
+
+const philippineDateFormatter = new Intl.DateTimeFormat('en-PH', {
+    timeZone: PHILIPPINE_TIME_ZONE,
+    year: 'numeric',
+    month: 'short',
+    day: '2-digit'
+});
+
+function formatPhilippineDateTime(value) {
+    const date = value instanceof Date ? value : new Date(value || Date.now());
+    if (Number.isNaN(date.getTime())) return '-';
+    return `${philippineDateTimeFormatter.format(date)} Philippine Standard Time`;
+}
+
+function formatPhilippineDate(value) {
+    const date = value instanceof Date ? value : new Date(value || Date.now());
+    if (Number.isNaN(date.getTime())) return '-';
+    return philippineDateFormatter.format(date);
+}
 
 
 
@@ -146,7 +177,7 @@ function buildInvoicePdf(order, customer, items, invoiceNumber, filePath, meta =
         doc.text(`Customer: ${customer}`);
         doc.text(`Email: ${order.email || '-'}`);
         doc.text(`Contact Number: ${order.contact_number || meta.contactNumber || '-'}`);
-        doc.text(`Order Date: ${new Date(order.created_at).toLocaleString()}`);
+        doc.text(`Order Date: ${formatPhilippineDateTime(order.created_at)}`);
         doc.text(`Status: ${order.status || 'pending'}`);
         doc.text(`Invoice Prepared By: ${issuedBy}`);
         doc.text(`Payment Confirmed By: ${paidBy}`);
@@ -1349,7 +1380,7 @@ async function sendDiscontinuedProductInvoiceUpdateEmail(orderId, productName, a
                             <p><strong>Order Number:</strong> ${getOrderDisplayNumber(order)}</p>
                             <p><strong>Internal Order ID:</strong> #${orderId}</p>
                             <p><strong>Customer:</strong> ${customerName}</p>
-                            <p><strong>Order Date:</strong> ${new Date(order.created_at).toLocaleString()}</p>
+                            <p><strong>Order Date:</strong> ${formatPhilippineDateTime(order.created_at)}</p>
                             <p><strong>Status:</strong> ${order.status}</p>
                             <p><strong>Shipping Address:</strong> ${order.shipping_address || 'N/A'}</p>
 
@@ -1853,7 +1884,7 @@ function sendOrderReceipt(orderId, userId, invoiceId, res) {
                 const mailOptions = {
                     from: mailFrom,
                     to: userEmail,
-                    subject: `Order Receipt ${orderDisplayNumber} - ${new Date(order.created_at).toLocaleDateString()} - TongTong Ornamental Fish Store`,
+                    subject: `Order Receipt ${orderDisplayNumber} - ${formatPhilippineDate(order.created_at)} - TongTong Ornamental Fish Store`,
                     html: receiptHtml
                 };
                 
@@ -2264,7 +2295,7 @@ app.post('/api/worker/send-receipt-email', checkRole(['admin', 'worker']), (req,
             const mailOptions = {
                 from: mailFrom,
                 to: order.email,
-                subject: `Order Receipt ${getOrderDisplayNumber(order)} - ${new Date(order.created_at).toLocaleDateString()} - TongTong Ornamental Fish Store`,
+                subject: `Order Receipt ${getOrderDisplayNumber(order)} - ${formatPhilippineDate(order.created_at)} - TongTong Ornamental Fish Store`,
                 html: receiptHtml
             };
 
@@ -2469,7 +2500,7 @@ function sendPaymentConfirmationInvoiceEmail(orderId, requestedByUserId, callbac
             const mailOptions = {
                 from: mailFrom,
                 to: payload.email,
-                subject: `Payment Confirmed - Order ${getOrderDisplayNumber(payload)} - ${new Date(payload.created_at).toLocaleDateString()} (Invoice ${payload.invoice_number})`,
+                subject: `Payment Confirmed - Order ${getOrderDisplayNumber(payload)} - ${formatPhilippineDate(payload.created_at)} (Invoice ${payload.invoice_number})`,
                 html: `
                     <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
                         <h2>TongTong Ornamental Fish Store</h2>
@@ -2477,8 +2508,8 @@ function sendPaymentConfirmationInvoiceEmail(orderId, requestedByUserId, callbac
                         <p>Your in-store payment for <strong>Order ${getOrderDisplayNumber(payload)}</strong> has been confirmed.</p>
                         <p><strong>Internal Order ID:</strong> #${payload.order_id}</p>
                         <p><strong>Invoice Number:</strong> ${payload.invoice_number}</p>
-                        <p><strong>Order Date:</strong> ${new Date(payload.created_at).toLocaleString()}</p>
-                        <p><strong>Payment Confirmation Date:</strong> ${new Date().toLocaleString()}</p>
+                        <p><strong>Order Date:</strong> ${formatPhilippineDateTime(payload.created_at)}</p>
+                        <p><strong>Payment Confirmation Date:</strong> ${formatPhilippineDateTime(new Date())}</p>
                         <p><strong>Total Amount:</strong> PHP ${Number(payload.total_amount || 0).toFixed(2)}</p>
                         <p><strong>Prepared By:</strong> ${payload.issued_by_name || 'Store Staff'}</p>
                         <p><strong>Payment Confirmed By:</strong> ${payload.paid_by_name || 'Store Staff'}</p>
@@ -3531,7 +3562,7 @@ function generateReceiptHtml(order, items, userName) {
                 <p><strong>Order Number:</strong> ${getOrderDisplayNumber(order)}</p>
                 <p><strong>Internal Order ID:</strong> #${order.order_id}</p>
                 <p><strong>Customer:</strong> ${userName}</p>
-                <p><strong>Order Date:</strong> ${new Date(order.created_at).toLocaleString()}</p>
+                <p><strong>Order Date:</strong> ${formatPhilippineDateTime(order.created_at)}</p>
                 <p><strong>Status:</strong> ${order.status}</p>
                 <p><strong>Shipping Address:</strong> ${order.shipping_address}</p>
                 
